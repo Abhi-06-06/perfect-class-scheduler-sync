@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { 
   Tabs, 
@@ -249,7 +250,7 @@ const TeacherForm = ({ onAddTeacher }: { onAddTeacher: (teacher: Omit<Teacher, "
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">Any Year</SelectItem>
+                      <SelectItem value="none">Any Year</SelectItem>
                       <SelectItem value="1">1st Year</SelectItem>
                       <SelectItem value="2">2nd Year</SelectItem>
                       <SelectItem value="3">3rd Year</SelectItem>
