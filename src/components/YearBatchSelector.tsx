@@ -29,7 +29,7 @@ const YearBatchSelector = ({
   };
 
   const handleBatchChange = (value: string) => {
-    if (value === "") {
+    if (value === "all") {
       onBatchChange(undefined);
     } else {
       onBatchChange(value as Batch);
@@ -66,11 +66,11 @@ const YearBatchSelector = ({
             <Label htmlFor="batch-select" className="mb-2 block">Batch</Label>
             <ToggleGroup 
               type="single" 
-              value={selectedBatch || ""} 
+              value={selectedBatch || "all"} 
               onValueChange={handleBatchChange}
               className="justify-start"
             >
-              <ToggleGroupItem value="" aria-label="All Batches">All</ToggleGroupItem>
+              <ToggleGroupItem value="all" aria-label="All Batches">All</ToggleGroupItem>
               {BATCHES.map(batch => (
                 <ToggleGroupItem 
                   key={batch} 
