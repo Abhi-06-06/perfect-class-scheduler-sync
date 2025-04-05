@@ -36,6 +36,18 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { BATCHES } from "@/data/mockData";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Trash } from "lucide-react";
 
 interface InputFormsProps {
   teachers: Teacher[];
@@ -55,6 +67,22 @@ const InputForms = ({
   onAddCourse
 }: InputFormsProps) => {
   const [activeTab, setActiveTab] = useState("teachers");
+  const [teachersData, setTeachersData] = useState<Teacher[]>(teachers);
+  const [classroomsData, setClassroomsData] = useState<Classroom[]>(classrooms);
+
+  // Function to delete a teacher
+  const handleDeleteTeacher = () => {
+    setTeachersData([]);
+    // This will reset the teachers array at the component level
+    // In a real app, this would call an API to delete teachers
+  };
+
+  // Function to delete a classroom
+  const handleDeleteClassroom = () => {
+    setClassroomsData([]);
+    // This will reset the classrooms array at the component level
+    // In a real app, this would call an API to delete classrooms
+  };
 
   return (
     <Tabs defaultValue="teachers" value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -65,10 +93,58 @@ const InputForms = ({
       </TabsList>
       
       <TabsContent value="teachers">
+        <div className="mb-4 flex justify-end">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" size="sm">
+                <Trash className="mr-2 h-4 w-4" />
+                Delete All Teachers
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action will delete all teachers data. This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDeleteTeacher}>
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
         <TeacherForm onAddTeacher={onAddTeacher} />
       </TabsContent>
       
       <TabsContent value="classrooms">
+        <div className="mb-4 flex justify-end">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" size="sm">
+                <Trash className="mr-2 h-4 w-4" />
+                Delete All Classrooms
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action will delete all classrooms data. This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDeleteClassroom}>
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
         <ClassroomForm onAddClassroom={onAddClassroom} />
       </TabsContent>
       
@@ -85,7 +161,8 @@ const InputForms = ({
 const teacherSchema = z.object({
   name: z.string().min(3, { message: "Name must be at least 3 characters" }),
   subjects: z.string().min(3, { message: "Enter at least one subject" }),
-  maxConsecutiveLectures: z.coerce.number().min(1).max(6)
+  maxConsecutiveLectures: z.coerce.number().min(1).max(6),
+  yearCommitment: z.string().optional()
 });
 
 const TeacherForm = ({ onAddTeacher }: { onAddTeacher: (teacher: Omit<Teacher, "id">) => void }) => {
@@ -94,7 +171,8 @@ const TeacherForm = ({ onAddTeacher }: { onAddTeacher: (teacher: Omit<Teacher, "
     defaultValues: {
       name: "",
       subjects: "",
-      maxConsecutiveLectures: 2
+      maxConsecutiveLectures: 2,
+      yearCommitment: ""
     }
   });
 
@@ -103,7 +181,8 @@ const TeacherForm = ({ onAddTeacher }: { onAddTeacher: (teacher: Omit<Teacher, "
     onAddTeacher({
       name: data.name,
       subjects,
-      maxConsecutiveLectures: data.maxConsecutiveLectures
+      maxConsecutiveLectures: data.maxConsecutiveLectures,
+      yearAssigned: data.yearCommitment ? parseInt(data.yearCommitment) : undefined
     });
     form.reset();
   };
@@ -156,6 +235,34 @@ const TeacherForm = ({ onAddTeacher }: { onAddTeacher: (teacher: Omit<Teacher, "
                   <FormControl>
                     <Input type="number" min={1} max={6} {...field} />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="yearCommitment"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Year Commitment (Optional)</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a year (optional)" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="">Any Year</SelectItem>
+                      <SelectItem value="1">1st Year</SelectItem>
+                      <SelectItem value="2">2nd Year</SelectItem>
+                      <SelectItem value="3">3rd Year</SelectItem>
+                      <SelectItem value="4">4th Year</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
