@@ -178,8 +178,10 @@ const classroomSchema = z.object({
   isLab: z.boolean().default(false)
 });
 
+type ClassroomFormData = z.infer<typeof classroomSchema>;
+
 const ClassroomForm = ({ onAddClassroom }: { onAddClassroom: (classroom: Omit<Classroom, "id">) => void }) => {
-  const form = useForm<z.infer<typeof classroomSchema>>({
+  const form = useForm<ClassroomFormData>({
     resolver: zodResolver(classroomSchema),
     defaultValues: {
       name: "",
@@ -188,8 +190,14 @@ const ClassroomForm = ({ onAddClassroom }: { onAddClassroom: (classroom: Omit<Cl
     }
   });
 
-  const onSubmit = (data: z.infer<typeof classroomSchema>) => {
-    onAddClassroom(data);
+  const onSubmit = (data: ClassroomFormData) => {
+    // Explicitly create an object that matches the required Omit<Classroom, "id"> type
+    const newClassroom: Omit<Classroom, "id"> = {
+      name: data.name,
+      capacity: data.capacity,
+      isLab: data.isLab
+    };
+    onAddClassroom(newClassroom);
     form.reset();
   };
 
@@ -271,6 +279,8 @@ const courseSchema = z.object({
   teacherId: z.string({ required_error: "Please select a teacher" })
 });
 
+type CourseFormData = z.infer<typeof courseSchema>;
+
 const CourseForm = ({ 
   onAddCourse, 
   teachers 
@@ -278,7 +288,7 @@ const CourseForm = ({
   onAddCourse: (course: Omit<Course, "id">) => void;
   teachers: Teacher[];
 }) => {
-  const form = useForm<z.infer<typeof courseSchema>>({
+  const form = useForm<CourseFormData>({
     resolver: zodResolver(courseSchema),
     defaultValues: {
       name: "",
@@ -289,8 +299,16 @@ const CourseForm = ({
     }
   });
 
-  const onSubmit = (data: z.infer<typeof courseSchema>) => {
-    onAddCourse(data);
+  const onSubmit = (data: CourseFormData) => {
+    // Explicitly create an object that matches the required Omit<Course, "id"> type
+    const newCourse: Omit<Course, "id"> = {
+      name: data.name,
+      subjectCode: data.subjectCode,
+      requiredSessions: data.requiredSessions,
+      requiresLab: data.requiresLab,
+      teacherId: data.teacherId
+    };
+    onAddCourse(newCourse);
     form.reset();
   };
 
