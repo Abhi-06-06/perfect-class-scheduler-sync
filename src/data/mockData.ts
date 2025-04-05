@@ -1,5 +1,4 @@
-
-import { Classroom, Course, Teacher, TimeSlot, TimetableEntry, Day } from "@/types";
+import { Classroom, Course, Teacher, TimeSlot, TimetableEntry, Day, Batch, YearGroup } from "@/types";
 
 export const DAYS_OF_WEEK: Day[] = [
   "Monday",
@@ -9,6 +8,8 @@ export const DAYS_OF_WEEK: Day[] = [
   "Friday",
   "Saturday"
 ];
+
+export const BATCHES: Batch[] = ["A", "B", "C", "D"];
 
 export const TIME_SLOTS: TimeSlot[] = [
   { id: "slot1", startTime: "09:00", endTime: "10:00" },
@@ -20,6 +21,37 @@ export const TIME_SLOTS: TimeSlot[] = [
   { id: "slot6", startTime: "14:45", endTime: "15:45" },
   { id: "recess2", startTime: "15:45", endTime: "16:00", isBreak: true },
   { id: "slot7", startTime: "16:00", endTime: "17:00" },
+  { id: "lab1", startTime: "09:00", endTime: "11:00", isLabSession: true },
+  { id: "lab2", startTime: "11:00", endTime: "13:00", isLabSession: true },
+  { id: "lab3", startTime: "14:00", endTime: "16:00", isLabSession: true },
+  { id: "lab4", startTime: "16:00", endTime: "18:00", isLabSession: true }
+];
+
+export const YEAR_GROUPS: YearGroup[] = [
+  {
+    id: "year1",
+    year: 1,
+    batches: ["A", "B", "C", "D"],
+    courses: []
+  },
+  {
+    id: "year2",
+    year: 2,
+    batches: ["A", "B", "C", "D"],
+    courses: []
+  },
+  {
+    id: "year3",
+    year: 3,
+    batches: ["A", "B", "C", "D"],
+    courses: []
+  },
+  {
+    id: "year4",
+    year: 4,
+    batches: ["A", "B", "C", "D"],
+    courses: []
+  }
 ];
 
 export const SAMPLE_TEACHERS: Teacher[] = [
@@ -50,11 +82,12 @@ export const SAMPLE_TEACHERS: Teacher[] = [
 ];
 
 export const SAMPLE_CLASSROOMS: Classroom[] = [
-  { id: "c1", name: "A101", capacity: 60, isLab: false },
-  { id: "c2", name: "A102", capacity: 40, isLab: false },
-  { id: "c3", name: "B201", capacity: 30, isLab: false },
-  { id: "c4", name: "L101", capacity: 30, isLab: true },
-  { id: "c5", name: "L102", capacity: 25, isLab: true }
+  { id: "c1", name: "A101", capacity: 60, isLab: false, yearAssigned: 1 },
+  { id: "c2", name: "A102", capacity: 60, isLab: false, yearAssigned: 2 },
+  { id: "c3", name: "B201", capacity: 60, isLab: false, yearAssigned: 3 },
+  { id: "c4", name: "B202", capacity: 60, isLab: false, yearAssigned: 4 },
+  { id: "lab1", name: "L101", capacity: 30, isLab: true },
+  { id: "lab2", name: "L102", capacity: 30, isLab: true }
 ];
 
 export const SAMPLE_COURSES: Course[] = [
@@ -64,7 +97,8 @@ export const SAMPLE_COURSES: Course[] = [
     subjectCode: "MATH101",
     requiredSessions: 4,
     requiresLab: false,
-    teacherId: "t1"
+    teacherId: "t1",
+    year: 1
   },
   {
     id: "crs2",
@@ -72,7 +106,9 @@ export const SAMPLE_COURSES: Course[] = [
     subjectCode: "CS101",
     requiredSessions: 3,
     requiresLab: true,
-    teacherId: "t2"
+    teacherId: "t2",
+    year: 1, 
+    batches: ["A", "B", "C", "D"]
   },
   {
     id: "crs3",
@@ -80,30 +116,34 @@ export const SAMPLE_COURSES: Course[] = [
     subjectCode: "PHY101",
     requiredSessions: 3,
     requiresLab: true,
-    teacherId: "t3"
+    teacherId: "t3",
+    year: 1,
+    batches: ["A", "B", "C", "D"]
   },
   {
     id: "crs4",
-    name: "Chemistry Basics",
-    subjectCode: "CHEM101",
+    name: "Circuit Theory",
+    subjectCode: "ECE201",
     requiredSessions: 3,
     requiresLab: true,
-    teacherId: "t4"
+    teacherId: "t4",
+    year: 2,
+    batches: ["A", "B", "C", "D"]
   },
   {
     id: "crs5",
-    name: "Statistics",
-    subjectCode: "MATH202",
+    name: "Data Structures",
+    subjectCode: "CS202",
     requiredSessions: 2,
-    requiresLab: false,
-    teacherId: "t1"
+    requiresLab: true,
+    teacherId: "t2",
+    year: 2,
+    batches: ["A", "B", "C", "D"]
   }
 ];
 
-// Initial empty timetable
 export const EMPTY_TIMETABLE: TimetableEntry[] = [];
 
-// A sample pre-generated timetable for demonstration
 export const SAMPLE_TIMETABLE: TimetableEntry[] = [
   {
     id: "entry1",
@@ -111,23 +151,29 @@ export const SAMPLE_TIMETABLE: TimetableEntry[] = [
     timeSlotId: "slot1",
     courseId: "crs1",
     teacherId: "t1",
-    classroomId: "c1"
+    classroomId: "c1",
+    year: 1
   },
   {
     id: "entry2",
     dayOfWeek: "Monday",
-    timeSlotId: "slot2",
+    timeSlotId: "lab1",
     courseId: "crs2",
     teacherId: "t2",
-    classroomId: "c4"
+    classroomId: "lab1",
+    batch: "A",
+    isLabSession: true,
+    year: 1
   },
   {
     id: "entry3",
     dayOfWeek: "Monday",
-    timeSlotId: "slot3",
+    timeSlotId: "lab1",
     courseId: "crs3",
     teacherId: "t3",
-    classroomId: "c5"
-  },
-  // More entries would be added for a complete timetable
+    classroomId: "lab2",
+    batch: "B",
+    isLabSession: true,
+    year: 1
+  }
 ];

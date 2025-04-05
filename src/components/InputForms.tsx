@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { 
   Tabs, 
@@ -31,10 +30,11 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { Teacher, Classroom, Course } from "@/types";
+import { Teacher, Classroom, Course, Batch } from "@/types";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { BATCHES } from "@/data/mockData";
 
 interface InputFormsProps {
   teachers: Teacher[];
@@ -81,7 +81,6 @@ const InputForms = ({
   );
 };
 
-// Teacher Form
 const teacherSchema = z.object({
   name: z.string().min(3, { message: "Name must be at least 3 characters" }),
   subjects: z.string().min(3, { message: "Enter at least one subject" }),
@@ -171,11 +170,10 @@ const TeacherForm = ({ onAddTeacher }: { onAddTeacher: (teacher: Omit<Teacher, "
   );
 };
 
-// Classroom Form
 const classroomSchema = z.object({
   name: z.string().min(2, { message: "Room name must be at least 2 characters" }),
-  capacity: z.coerce.number().min(1, { message: "Capacity must be at least 1" }),
-  isLab: z.boolean().default(false)
+  isLab: z.boolean().default(false),
+  yearAssigned: z.string().optional()
 });
 
 type ClassroomFormData = z.infer<typeof classroomSchema>;
@@ -185,17 +183,17 @@ const ClassroomForm = ({ onAddClassroom }: { onAddClassroom: (classroom: Omit<Cl
     resolver: zodResolver(classroomSchema),
     defaultValues: {
       name: "",
-      capacity: 30,
-      isLab: false
+      isLab: false,
+      yearAssigned: ""
     }
   });
 
   const onSubmit = (data: ClassroomFormData) => {
-    // Explicitly create an object that matches the required Omit<Classroom, "id"> type
     const newClassroom: Omit<Classroom, "id"> = {
       name: data.name,
-      capacity: data.capacity,
-      isLab: data.isLab
+      capacity: 60,
+      isLab: data.isLab,
+      yearAssigned: data.yearAssigned ? parseInt(data.yearAssigned) : undefined
     };
     onAddClassroom(newClassroom);
     form.reset();
@@ -226,19 +224,9 @@ const ClassroomForm = ({ onAddClassroom }: { onAddClassroom: (classroom: Omit<Cl
               )}
             />
             
-            <FormField
-              control={form.control}
-              name="capacity"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Capacity</FormLabel>
-                  <FormControl>
-                    <Input type="number" min={1} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="text-sm text-gray-500 mb-2">
+              Each classroom has a fixed capacity of 60 students
+            </div>
             
             <FormField
               control={form.control}
@@ -260,6 +248,34 @@ const ClassroomForm = ({ onAddClassroom }: { onAddClassroom: (classroom: Omit<Cl
               )}
             />
             
+            <FormField
+              control={form.control}
+              name="yearAssigned"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Assigned Year (Leave empty for shared rooms)</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a year" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="">Any Year</SelectItem>
+                      <SelectItem value="1">1st Year</SelectItem>
+                      <SelectItem value="2">2nd Year</SelectItem>
+                      <SelectItem value="3">3rd Year</SelectItem>
+                      <SelectItem value="4">4th Year</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
             <Button type="submit" className="bg-acd-primary hover:bg-acd-primary/90">
               Add Classroom
             </Button>
@@ -270,13 +286,14 @@ const ClassroomForm = ({ onAddClassroom }: { onAddClassroom: (classroom: Omit<Cl
   );
 };
 
-// Course Form
 const courseSchema = z.object({
   name: z.string().min(3, { message: "Course name must be at least 3 characters" }),
   subjectCode: z.string().min(3, { message: "Subject code must be at least 3 characters" }),
   requiredSessions: z.coerce.number().min(1).max(10),
   requiresLab: z.boolean().default(false),
-  teacherId: z.string({ required_error: "Please select a teacher" })
+  teacherId: z.string({ required_error: "Please select a teacher" }),
+  year: z.string({ required_error: "Please select a year" }),
+  batches: z.array(z.string()).optional()
 });
 
 type CourseFormData = z.infer<typeof courseSchema>;
@@ -295,18 +312,23 @@ const CourseForm = ({
       subjectCode: "",
       requiredSessions: 3,
       requiresLab: false,
-      teacherId: ""
+      teacherId: "",
+      year: "",
+      batches: []
     }
   });
 
+  const requiresLab = form.watch("requiresLab");
+
   const onSubmit = (data: CourseFormData) => {
-    // Explicitly create an object that matches the required Omit<Course, "id"> type
     const newCourse: Omit<Course, "id"> = {
       name: data.name,
       subjectCode: data.subjectCode,
       requiredSessions: data.requiredSessions,
       requiresLab: data.requiresLab,
-      teacherId: data.teacherId
+      teacherId: data.teacherId,
+      year: parseInt(data.year),
+      batches: requiresLab && data.batches?.length ? data.batches as Batch[] : undefined
     };
     onAddCourse(newCourse);
     form.reset();
@@ -353,6 +375,33 @@ const CourseForm = ({
             
             <FormField
               control={form.control}
+              name="year"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Year</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select year" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="1">1st Year</SelectItem>
+                      <SelectItem value="2">2nd Year</SelectItem>
+                      <SelectItem value="3">3rd Year</SelectItem>
+                      <SelectItem value="4">4th Year</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
               name="requiredSessions"
               render={({ field }) => (
                 <FormItem>
@@ -378,12 +427,58 @@ const CourseForm = ({
                   </FormControl>
                   <div className="space-y-1 leading-none">
                     <FormLabel>
-                      Requires laboratory
+                      Requires laboratory (2 hour sessions)
                     </FormLabel>
                   </div>
                 </FormItem>
               )}
             />
+            
+            {requiresLab && (
+              <FormField
+                control={form.control}
+                name="batches"
+                render={() => (
+                  <FormItem>
+                    <FormLabel>Select Batches for Lab Sessions</FormLabel>
+                    <div className="grid grid-cols-2 gap-2">
+                      {BATCHES.map((batch) => (
+                        <FormField
+                          key={batch}
+                          control={form.control}
+                          name="batches"
+                          render={({ field }) => {
+                            return (
+                              <FormItem
+                                key={batch}
+                                className="flex flex-row items-start space-x-3 space-y-0"
+                              >
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value?.includes(batch)}
+                                    onCheckedChange={(checked) => {
+                                      const currentValue = field.value || [];
+                                      const newValue = checked
+                                        ? [...currentValue, batch]
+                                        : currentValue.filter((value) => value !== batch);
+                                      field.onChange(newValue);
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormLabel className="text-sm font-normal">
+                                  Batch {batch}
+                                </FormLabel>
+                              </FormItem>
+                            );
+                          }}
+                        />
+                      ))}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
             
             <FormField
               control={form.control}

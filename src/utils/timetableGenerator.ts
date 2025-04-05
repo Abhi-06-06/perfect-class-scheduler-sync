@@ -1,9 +1,8 @@
-
 import { 
   Teacher, Classroom, Course, TimetableEntry, TimeSlot, 
-  Timetable, ValidationError, Day 
+  Timetable, ValidationError, Day, Batch 
 } from "@/types";
-import { TIME_SLOTS, DAYS_OF_WEEK } from "@/data/mockData";
+import { TIME_SLOTS, DAYS_OF_WEEK, BATCHES } from "@/data/mockData";
 
 /**
  * Validates if a timetable meets all constraints
@@ -47,7 +46,25 @@ export function validateTimetable(
     });
   }
 
-  // Additional validations can be added here
+  // Check batch lab constraints (no more than one lab per day per batch)
+  const batchLabConflicts = findBatchLabConflicts(timetable);
+  if (batchLabConflicts.length > 0) {
+    errors.push({
+      type: "BATCH_LAB_CONFLICT",
+      message: "A batch has more than one lab session scheduled on the same day",
+      affectedEntries: batchLabConflicts
+    });
+  }
+
+  // Check more than two batch labs in a day
+  const dayLabLimitConflicts = findDayLabLimitConflicts(timetable);
+  if (dayLabLimitConflicts.length > 0) {
+    errors.push({
+      type: "DAY_LAB_LIMIT_CONFLICT",
+      message: "More than two batches have lab sessions scheduled on the same day",
+      affectedEntries: dayLabLimitConflicts
+    });
+  }
 
   return errors;
 }
@@ -152,6 +169,65 @@ function findConsecutiveLectureConflicts(
 }
 
 /**
+ * Finds conflicts where a batch has more than one lab in a day
+ */
+function findBatchLabConflicts(timetable: TimetableEntry[]): TimetableEntry[] {
+  const conflicts: TimetableEntry[] = [];
+  const batchDayLabMap: Record<string, TimetableEntry[]> = {};
+
+  // Group lab sessions by batch and day
+  timetable.forEach(entry => {
+    if (entry.isLabSession && entry.batch) {
+      const key = `${entry.batch}_${entry.dayOfWeek}_${entry.year}`;
+      if (!batchDayLabMap[key]) {
+        batchDayLabMap[key] = [];
+      }
+      batchDayLabMap[key].push(entry);
+    }
+  });
+
+  // Find conflicts
+  Object.values(batchDayLabMap).forEach(entries => {
+    if (entries.length > 1) {
+      conflicts.push(...entries);
+    }
+  });
+
+  return conflicts;
+}
+
+/**
+ * Finds conflicts where more than two batches have labs on the same day
+ */
+function findDayLabLimitConflicts(timetable: TimetableEntry[]): TimetableEntry[] {
+  const conflicts: TimetableEntry[] = [];
+  const dayYearLabMap: Record<string, Set<string>> = {};
+  const dayYearEntries: Record<string, TimetableEntry[]> = {};
+
+  // Group lab sessions by day and year, count unique batches
+  timetable.forEach(entry => {
+    if (entry.isLabSession && entry.batch && entry.year) {
+      const key = `${entry.dayOfWeek}_${entry.year}`;
+      if (!dayYearLabMap[key]) {
+        dayYearLabMap[key] = new Set();
+        dayYearEntries[key] = [];
+      }
+      dayYearLabMap[key].add(entry.batch);
+      dayYearEntries[key].push(entry);
+    }
+  });
+
+  // Find days with more than 2 batches having labs
+  Object.entries(dayYearLabMap).forEach(([key, batches]) => {
+    if (batches.size > 2) {
+      conflicts.push(...dayYearEntries[key]);
+    }
+  });
+
+  return conflicts;
+}
+
+/**
  * Generates a timetable based on given constraints
  */
 export function generateTimetable(
@@ -164,16 +240,19 @@ export function generateTimetable(
   let entryId = 1;
 
   // Get non-break time slots
-  const availableSlots = TIME_SLOTS.filter(slot => !slot.isBreak);
+  const regularSlots = TIME_SLOTS.filter(slot => !slot.isBreak && !slot.isLabSession);
+  const labSlots = TIME_SLOTS.filter(slot => !slot.isBreak && slot.isLabSession);
   
-  // For each course, assign required sessions
+  // Schedule lectures first (non-lab sessions)
   courses.forEach(course => {
     const teacher = teachers.find(t => t.id === course.teacherId);
     if (!teacher) return;
 
-    // Find suitable classrooms
+    // Find suitable classrooms based on year and lab requirements
     const suitableClassrooms = classrooms.filter(c => 
-      (course.requiresLab && c.isLab) || (!course.requiresLab && !c.isLab)
+      (!course.requiresLab || !course.batches) && // Regular lectures only here
+      !c.isLab && 
+      (!c.yearAssigned || c.yearAssigned === course.year)
     );
     
     if (suitableClassrooms.length === 0) return;
@@ -191,8 +270,8 @@ export function generateTimetable(
       const day = DAYS_OF_WEEK[dayIndex];
       
       // Pick a random time slot
-      const slotIndex = Math.floor(Math.random() * availableSlots.length);
-      const timeSlot = availableSlots[slotIndex];
+      const slotIndex = Math.floor(Math.random() * regularSlots.length);
+      const timeSlot = regularSlots[slotIndex];
       
       // Pick a random classroom
       const classroomIndex = Math.floor(Math.random() * suitableClassrooms.length);
@@ -206,38 +285,108 @@ export function generateTimetable(
       );
       
       if (!conflict) {
-        // Check for consecutive lectures constraint
-        const teacherDailySchedule = timetable.filter(
-          entry => entry.teacherId === teacher.id && entry.dayOfWeek === day
+        // Add entry to timetable
+        timetable.push({
+          id: `entry${entryId++}`,
+          dayOfWeek: day,
+          timeSlotId: timeSlot.id,
+          courseId: course.id,
+          teacherId: teacher.id,
+          classroomId: classroom.id,
+          year: course.year
+        });
+        
+        sessionsAssigned++;
+      }
+    }
+  });
+
+  // Now schedule lab sessions
+  courses.forEach(course => {
+    if (!course.requiresLab || !course.batches || course.batches.length === 0) return;
+    
+    const teacher = teachers.find(t => t.id === course.teacherId);
+    if (!teacher) return;
+
+    // Find suitable labs
+    const suitableLabs = classrooms.filter(c => c.isLab);
+    if (suitableLabs.length === 0) return;
+    
+    // For each batch, schedule a lab session
+    course.batches.forEach(batch => {
+      let labAssigned = false;
+      let attempts = 0;
+      const maxAttempts = 200; // More attempts for labs as they're harder to schedule
+      
+      while (!labAssigned && attempts < maxAttempts) {
+        attempts++;
+        
+        // Pick a random day
+        const dayIndex = Math.floor(Math.random() * DAYS_OF_WEEK.length);
+        const day = DAYS_OF_WEEK[dayIndex];
+        
+        // Pick a random lab slot
+        const labSlotIndex = Math.floor(Math.random() * labSlots.length);
+        const labSlot = labSlots[labSlotIndex];
+        
+        // Pick a random lab
+        const labIndex = Math.floor(Math.random() * suitableLabs.length);
+        const lab = suitableLabs[labIndex];
+        
+        // Check if this lab is available
+        const labConflict = timetable.some(entry => 
+          entry.dayOfWeek === day && 
+          entry.timeSlotId === labSlot.id && 
+          entry.classroomId === lab.id
         );
         
-        // Simple check for consecutive lectures - can be improved
-        let wouldExceedConsecutive = false;
-        if (teacherDailySchedule.length > 0) {
-          const consecutive = checkConsecutiveLectures(
-            teacherDailySchedule, 
-            timeSlot, 
-            TIME_SLOTS,
-            teacher.maxConsecutiveLectures || 2
-          );
-          if (consecutive) wouldExceedConsecutive = true;
-        }
+        // Check if teacher is available
+        const teacherConflict = timetable.some(entry => 
+          entry.dayOfWeek === day && 
+          entry.timeSlotId === labSlot.id && 
+          entry.teacherId === teacher.id
+        );
         
-        if (!wouldExceedConsecutive) {
-          // Add entry to timetable
+        // Check if this batch already has a lab on this day
+        const batchLabConflict = timetable.some(entry => 
+          entry.dayOfWeek === day && 
+          entry.batch === batch && 
+          entry.isLabSession &&
+          entry.year === course.year
+        );
+        
+        // Check if there are already two batches with labs on this day
+        const batchesWithLabsOnDay = new Set(
+          timetable
+            .filter(entry => 
+              entry.dayOfWeek === day && 
+              entry.isLabSession && 
+              entry.year === course.year &&
+              entry.batch
+            )
+            .map(entry => entry.batch)
+        );
+        
+        const tooManyBatchesWithLabs = batchesWithLabsOnDay.size >= 2;
+        
+        if (!labConflict && !teacherConflict && !batchLabConflict && !tooManyBatchesWithLabs) {
+          // Add lab session to timetable
           timetable.push({
             id: `entry${entryId++}`,
             dayOfWeek: day,
-            timeSlotId: timeSlot.id,
+            timeSlotId: labSlot.id,
             courseId: course.id,
             teacherId: teacher.id,
-            classroomId: classroom.id
+            classroomId: lab.id,
+            batch,
+            isLabSession: true,
+            year: course.year
           });
           
-          sessionsAssigned++;
+          labAssigned = true;
         }
       }
-    }
+    });
   });
 
   return { entries: timetable };
@@ -252,8 +401,6 @@ function checkConsecutiveLectures(
   allTimeSlots: TimeSlot[],
   maxConsecutive: number
 ): boolean {
-  // This is a simplified implementation
-  // In a real system, we would need more sophisticated logic
   return false;
 }
 
@@ -265,4 +412,24 @@ export function getTeacherTimetable(
   teacherId: string
 ): TimetableEntry[] {
   return timetable.filter(entry => entry.teacherId === teacherId);
+}
+
+/**
+ * Filters timetable entries for a specific year and optionally a batch
+ */
+export function getYearTimetable(
+  timetable: TimetableEntry[],
+  year: number,
+  batch?: Batch
+): TimetableEntry[] {
+  let filtered = timetable.filter(entry => entry.year === year);
+  
+  if (batch) {
+    filtered = filtered.filter(entry => 
+      // Include entries specifically for this batch or entries with no batch (lectures for all)
+      entry.batch === batch || (!entry.batch && !entry.isLabSession)
+    );
+  }
+  
+  return filtered;
 }

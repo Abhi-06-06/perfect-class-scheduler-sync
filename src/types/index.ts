@@ -4,7 +4,10 @@ export type TimeSlot = {
   startTime: string;
   endTime: string;
   isBreak?: boolean;
+  isLabSession?: boolean; // Double duration slots for lab sessions
 };
+
+export type Batch = "A" | "B" | "C" | "D";
 
 export type Teacher = {
   id: string;
@@ -19,6 +22,7 @@ export type Classroom = {
   name: string;
   capacity: number;
   isLab: boolean;
+  yearAssigned?: number; // 1-4 for year assignment
 };
 
 export type Course = {
@@ -28,6 +32,8 @@ export type Course = {
   requiredSessions: number;
   requiresLab: boolean;
   teacherId: string;
+  year?: number; // 1-4 for which year students
+  batches?: Batch[]; // Which batches this course is for
 };
 
 export type TimetableEntry = {
@@ -37,6 +43,9 @@ export type TimetableEntry = {
   courseId: string;
   teacherId: string;
   classroomId: string;
+  batch?: Batch; // Optional batch assignment (mainly for lab sessions)
+  isLabSession?: boolean;
+  year?: number; // 1-4 for which year students
 };
 
 export type Day = "Monday" | "Tuesday" | "Wednesday" | "Thursday" | "Friday" | "Saturday";
@@ -49,4 +58,12 @@ export type ValidationError = {
   type: string;
   message: string;
   affectedEntries?: TimetableEntry[];
+};
+
+// Engineering program specific types
+export type YearGroup = {
+  id: string;
+  year: number; // 1-4
+  batches: Batch[];
+  courses: string[]; // Course IDs assigned to this year
 };

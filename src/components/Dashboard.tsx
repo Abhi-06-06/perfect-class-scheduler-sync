@@ -5,7 +5,8 @@ import TimetableGrid from "./TimetableGrid";
 import TeacherView from "./TeacherView";
 import InputForms from "./InputForms";
 import GenerateTimetable from "./GenerateTimetable";
-import { Teacher, Classroom, Course, TimetableEntry } from "@/types";
+import YearBatchSelector from "./YearBatchSelector";
+import { Teacher, Classroom, Course, TimetableEntry, Batch } from "@/types";
 import { SAMPLE_TEACHERS, SAMPLE_CLASSROOMS, SAMPLE_COURSES, EMPTY_TIMETABLE } from "@/data/mockData";
 
 const Dashboard = () => {
@@ -14,6 +15,8 @@ const Dashboard = () => {
   const [courses, setCourses] = useState<Course[]>(SAMPLE_COURSES);
   const [timetable, setTimetable] = useState<TimetableEntry[]>(EMPTY_TIMETABLE);
   const [activeTab, setActiveTab] = useState("timetable");
+  const [selectedYear, setSelectedYear] = useState<number | undefined>(undefined);
+  const [selectedBatch, setSelectedBatch] = useState<Batch | undefined>(undefined);
   
   const handleAddTeacher = (teacher: Omit<Teacher, "id">) => {
     const newTeacher: Teacher = {
@@ -43,6 +46,17 @@ const Dashboard = () => {
     setTimetable(entries);
     setActiveTab("timetable");
   };
+  
+  const handleYearChange = (year: number | undefined) => {
+    setSelectedYear(year);
+    if (!year) {
+      setSelectedBatch(undefined);
+    }
+  };
+  
+  const handleBatchChange = (batch: Batch | undefined) => {
+    setSelectedBatch(batch);
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -56,13 +70,28 @@ const Dashboard = () => {
         
         <TabsContent value="timetable" className="space-y-4">
           <h2 className="text-2xl font-bold text-acd-dark mb-4">Master Timetable</h2>
+          
           {timetable.length > 0 ? (
-            <TimetableGrid
-              timetable={timetable}
-              courses={courses}
-              teachers={teachers}
-              classrooms={classrooms}
-            />
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+              <div className="lg:col-span-1">
+                <YearBatchSelector
+                  onYearChange={handleYearChange}
+                  onBatchChange={handleBatchChange}
+                  selectedYear={selectedYear}
+                  selectedBatch={selectedBatch}
+                />
+              </div>
+              <div className="lg:col-span-3">
+                <TimetableGrid
+                  timetable={timetable}
+                  courses={courses}
+                  teachers={teachers}
+                  classrooms={classrooms}
+                  filterYear={selectedYear}
+                  filterBatch={selectedBatch}
+                />
+              </div>
+            </div>
           ) : (
             <div className="text-center py-20 bg-gray-50 rounded-lg border border-gray-200">
               <h3 className="text-xl font-medium text-gray-600 mb-2">No Timetable Generated Yet</h3>
