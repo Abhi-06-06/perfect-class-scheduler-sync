@@ -21,7 +21,7 @@ const YearBatchSelector = ({
   selectedBatch
 }: YearBatchSelectorProps) => {
   const handleYearChange = (value: string) => {
-    if (value === "") {
+    if (value === "all") {
       onYearChange(undefined);
     } else {
       onYearChange(parseInt(value));
@@ -46,13 +46,13 @@ const YearBatchSelector = ({
           <Label htmlFor="year-select">Year</Label>
           <Select 
             onValueChange={handleYearChange} 
-            value={selectedYear?.toString() || ""}
+            value={selectedYear?.toString() || "all"}
           >
             <SelectTrigger id="year-select">
               <SelectValue placeholder="Select year" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Years</SelectItem>
+              <SelectItem value="all">All Years</SelectItem>
               <SelectItem value="1">1st Year</SelectItem>
               <SelectItem value="2">2nd Year</SelectItem>
               <SelectItem value="3">3rd Year</SelectItem>
