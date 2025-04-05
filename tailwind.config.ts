@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,14 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// ACDSync custom colors
+				acd: {
+					primary: '#1a56db',
+					secondary: '#4b9fea',
+					accent: '#edf2ff',
+					light: '#f0f7ff',
+					dark: '#172b4d'
 				}
 			},
 			borderRadius: {
