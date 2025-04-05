@@ -15,6 +15,7 @@ export type Teacher = {
   subjects: string[];
   availableSlots?: string[]; // IDs of available TimeSlots
   maxConsecutiveLectures?: number;
+  yearAssigned?: number; // Which year this teacher is primarily assigned to
 };
 
 export type Classroom = {

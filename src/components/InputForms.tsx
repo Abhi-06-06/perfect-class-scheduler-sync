@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { 
   Tabs, 
@@ -70,18 +69,12 @@ const InputForms = ({
   const [teachersData, setTeachersData] = useState<Teacher[]>(teachers);
   const [classroomsData, setClassroomsData] = useState<Classroom[]>(classrooms);
 
-  // Function to delete a teacher
   const handleDeleteTeacher = () => {
     setTeachersData([]);
-    // This will reset the teachers array at the component level
-    // In a real app, this would call an API to delete teachers
   };
 
-  // Function to delete a classroom
   const handleDeleteClassroom = () => {
     setClassroomsData([]);
-    // This will reset the classrooms array at the component level
-    // In a real app, this would call an API to delete classrooms
   };
 
   return (
