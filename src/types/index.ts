@@ -5,6 +5,7 @@ export type TimeSlot = {
   endTime: string;
   isBreak?: boolean;
   isLabSession?: boolean; // Double duration slots for lab sessions
+  displayName?: string;  // For showing in the header (like "1", "2", etc.)
 };
 
 export type Batch = "A" | "B" | "C" | "D";

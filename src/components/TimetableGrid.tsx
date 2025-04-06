@@ -39,8 +39,9 @@ const TimetableGrid = ({
   filterBatch,
   showClassroom = true
 }: TimetableGridProps) => {
-  // Get all timeslots, including lab sessions
+  // Get all timeslots, excluding break time slots for display
   const displayTimeSlots = TIME_SLOTS.filter(slot => !slot.isBreak);
+  const breakTimeSlots = TIME_SLOTS.filter(slot => slot.isBreak);
   
   // Apply filters to the timetable
   let filteredTimetable = timetable;
@@ -76,28 +77,49 @@ const TimetableGrid = ({
     );
   };
 
+  // Function to render a break cell
+  const renderBreakCell = () => (
+    <TableCell className="border bg-gray-100 text-center font-medium text-gray-500">
+      Recess
+    </TableCell>
+  );
+
   return (
     <div className="overflow-x-auto">
       <Table className="border-collapse w-full">
         <TableHeader>
           <TableRow>
-            <TableHead className="bg-gray-100 w-20">Time Slot</TableHead>
-            {DAYS_OF_WEEK.map(day => (
-              <TableHead key={day} className="bg-gray-100 font-medium">
-                {day}
+            <TableHead className="bg-gray-100 w-20 text-center">Day/Time</TableHead>
+            {displayTimeSlots.map(timeSlot => (
+              <TableHead key={timeSlot.id} className="bg-gray-100 font-medium text-center">
+                {timeSlot.displayName || `${timeSlot.startTime}-${timeSlot.endTime}`}
+                {timeSlot.isLabSession && 
+                  <div className="text-xs text-acd-primary">(Lab)</div>
+                }
+                <div className="text-xs text-gray-500">
+                  {timeSlot.startTime} - {timeSlot.endTime}
+                </div>
               </TableHead>
             ))}
           </TableRow>
         </TableHeader>
         <TableBody>
-          {displayTimeSlots.map(timeSlot => (
-            <TableRow key={timeSlot.id}>
+          {DAYS_OF_WEEK.map(day => (
+            <TableRow key={day}>
               <TableCell className="bg-gray-50 font-medium">
-                {timeSlot.startTime} - {timeSlot.endTime}
-                {timeSlot.isLabSession && <span className="text-xs ml-1 text-acd-primary">(Lab)</span>}
+                {day}
               </TableCell>
               
-              {DAYS_OF_WEEK.map(day => {
+              {displayTimeSlots.map((timeSlot, index) => {
+                // Check if this time slot should be a break cell
+                const breakTimeSlot = breakTimeSlots.find(slot => 
+                  slot.startTime >= timeSlot.startTime && slot.endTime <= timeSlot.endTime
+                );
+                
+                if (breakTimeSlot) {
+                  return renderBreakCell();
+                }
+                
                 const entries = findEntries(day, timeSlot.id);
                 
                 if (entries.length === 0) {
@@ -115,28 +137,24 @@ const TimetableGrid = ({
                         return (
                           <div 
                             key={entry.id}
-                            className={`bg-acd-light p-2 rounded border border-acd-secondary/20 h-full ${
-                              entry.isLabSession ? "border-l-4 border-l-acd-primary" : ""
+                            className={`p-2 rounded border h-full ${
+                              entry.isLabSession 
+                                ? "bg-blue-50 border-blue-200" 
+                                : "bg-acd-light border-acd-secondary/20"
                             }`}
                           >
-                            <div className="flex justify-between">
-                              <div className="font-medium text-acd-primary">{course?.name}</div>
-                              {entry.year && (
-                                <div className="text-xs bg-acd-secondary/20 px-1 py-0.5 rounded-sm">
-                                  Year {entry.year}
-                                </div>
-                              )}
+                            <div className="font-medium text-acd-primary">
+                              {course?.subjectCode}
                             </div>
-                            <div className="text-sm text-gray-600">{course?.subjectCode}</div>
                             {entry.batch && (
                               <div className="text-xs font-semibold">Batch {entry.batch}</div>
                             )}
                             {!filterTeacherId && (
                               <div className="text-xs text-gray-500">{teacher?.name}</div>
                             )}
-                            {showClassroom && (
+                            {showClassroom && classroom && (
                               <div className="text-xs mt-1 bg-acd-primary/10 inline-block px-1 rounded">
-                                {classroom?.name} {classroom?.isLab ? "(Lab)" : ""}
+                                {classroom.name}
                               </div>
                             )}
                           </div>

@@ -10,9 +10,9 @@ import { Teacher, Classroom, Course, TimetableEntry, Batch } from "@/types";
 import { SAMPLE_TEACHERS, SAMPLE_CLASSROOMS, SAMPLE_COURSES, EMPTY_TIMETABLE } from "@/data/mockData";
 
 const Dashboard = () => {
-  const [teachers, setTeachers] = useState<Teacher[]>(SAMPLE_TEACHERS);
-  const [classrooms, setClassrooms] = useState<Classroom[]>(SAMPLE_CLASSROOMS);
-  const [courses, setCourses] = useState<Course[]>(SAMPLE_COURSES);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [classrooms, setClassrooms] = useState<Classroom[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [timetable, setTimetable] = useState<TimetableEntry[]>(EMPTY_TIMETABLE);
   const [activeTab, setActiveTab] = useState("timetable");
   const [selectedYear, setSelectedYear] = useState<number | undefined>(undefined);
