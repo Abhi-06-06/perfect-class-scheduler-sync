@@ -313,6 +313,7 @@ const TeacherForm = ({ onAddTeacher }: { onAddTeacher: (teacher: Omit<Teacher, "
 const classroomSchema = z.object({
   name: z.string().min(2, { message: "Room name must be at least 2 characters" }),
   isLab: z.boolean().default(false),
+  capacity: z.coerce.number().default(60),
   yearAssigned: z.string().optional()
 });
 
@@ -324,14 +325,18 @@ const ClassroomForm = ({ onAddClassroom }: { onAddClassroom: (classroom: Omit<Cl
     defaultValues: {
       name: "",
       isLab: false,
+      capacity: 60,
       yearAssigned: "none"
     }
   });
 
+  const isLabSelected = form.watch("isLab");
+  
   const onSubmit = (data: ClassroomFormData) => {
     const newClassroom: Omit<Classroom, "id"> = {
       name: data.name,
-      capacity: 60,
+      // Set capacity based on whether it's a lab or regular classroom
+      capacity: data.isLab ? 30 : 60,
       isLab: data.isLab,
       yearAssigned: data.yearAssigned && data.yearAssigned !== "none" ? parseInt(data.yearAssigned) : undefined
     };
@@ -365,7 +370,9 @@ const ClassroomForm = ({ onAddClassroom }: { onAddClassroom: (classroom: Omit<Cl
             />
             
             <div className="text-sm text-gray-500 mb-2">
-              Each classroom has a fixed capacity of 60 students
+              {isLabSelected 
+                ? "Each lab has a capacity of 30 students" 
+                : "Each classroom has a fixed capacity of 60 students"}
             </div>
             
             <FormField
