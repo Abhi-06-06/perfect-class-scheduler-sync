@@ -56,6 +56,9 @@ interface InputFormsProps {
   onAddTeacher: (teacher: Omit<Teacher, "id">) => void;
   onAddClassroom: (classroom: Omit<Classroom, "id">) => void;
   onAddCourse: (course: Omit<Course, "id">) => void;
+  onDeleteAllTeachers?: () => void;
+  onDeleteAllClassrooms?: () => void;
+  onDeleteAllCourses?: () => void;
 }
 
 const InputForms = ({
@@ -64,18 +67,29 @@ const InputForms = ({
   courses,
   onAddTeacher,
   onAddClassroom,
-  onAddCourse
+  onAddCourse,
+  onDeleteAllTeachers,
+  onDeleteAllClassrooms,
+  onDeleteAllCourses
 }: InputFormsProps) => {
   const [activeTab, setActiveTab] = useState("teachers");
-  const [teachersData, setTeachersData] = useState<Teacher[]>(teachers);
-  const [classroomsData, setClassroomsData] = useState<Classroom[]>(classrooms);
 
   const handleDeleteTeacher = () => {
-    setTeachersData([]);
+    if (onDeleteAllTeachers) {
+      onDeleteAllTeachers();
+    }
   };
 
   const handleDeleteClassroom = () => {
-    setClassroomsData([]);
+    if (onDeleteAllClassrooms) {
+      onDeleteAllClassrooms();
+    }
+  };
+
+  const handleDeleteCourse = () => {
+    if (onDeleteAllCourses) {
+      onDeleteAllCourses();
+    }
   };
 
   return (
@@ -143,6 +157,30 @@ const InputForms = ({
       </TabsContent>
       
       <TabsContent value="courses">
+        <div className="mb-4 flex justify-end">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" size="sm">
+                <Trash className="mr-2 h-4 w-4" />
+                Delete All Courses
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action will delete all courses data. This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDeleteCourse}>
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
         <CourseForm 
           onAddCourse={onAddCourse} 
           teachers={teachers} 

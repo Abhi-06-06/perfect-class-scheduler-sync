@@ -12,19 +12,18 @@ export const DAYS_OF_WEEK: Day[] = [
 export const BATCHES: Batch[] = ["A", "B", "C", "D"];
 
 export const TIME_SLOTS: TimeSlot[] = [
-  { id: "slot1", startTime: "09:00", endTime: "10:00" },
-  { id: "slot2", startTime: "10:00", endTime: "11:00" },
-  { id: "slot3", startTime: "11:00", endTime: "12:00" },
-  { id: "recess1", startTime: "12:00", endTime: "12:45", isBreak: true },
-  { id: "slot4", startTime: "12:45", endTime: "13:45" },
-  { id: "slot5", startTime: "13:45", endTime: "14:45" },
-  { id: "slot6", startTime: "14:45", endTime: "15:45" },
-  { id: "recess2", startTime: "15:45", endTime: "16:00", isBreak: true },
-  { id: "slot7", startTime: "16:00", endTime: "17:00" },
-  { id: "lab1", startTime: "09:00", endTime: "11:00", isLabSession: true },
-  { id: "lab2", startTime: "11:00", endTime: "13:00", isLabSession: true },
-  { id: "lab3", startTime: "14:00", endTime: "16:00", isLabSession: true },
-  { id: "lab4", startTime: "16:00", endTime: "18:00", isLabSession: true }
+  { id: "slot1", startTime: "10:00", endTime: "11:00" },
+  { id: "slot2", startTime: "11:00", endTime: "12:00" },
+  { id: "recess1", startTime: "12:00", endTime: "12:30", isBreak: true },
+  { id: "slot3", startTime: "12:30", endTime: "13:30" },
+  { id: "slot4", startTime: "13:30", endTime: "14:30" },
+  { id: "slot5", startTime: "14:30", endTime: "15:30" },
+  { id: "slot6", startTime: "15:30", endTime: "16:30" },
+  { id: "slot7", startTime: "16:30", endTime: "17:00" },
+  { id: "lab1", startTime: "10:00", endTime: "12:00", isLabSession: true },
+  { id: "lab2", startTime: "12:30", endTime: "14:30", isLabSession: true },
+  { id: "lab3", startTime: "14:30", endTime: "16:30", isLabSession: true },
+  { id: "lab4", startTime: "15:00", endTime: "17:00", isLabSession: true }
 ];
 
 export const YEAR_GROUPS: YearGroup[] = [

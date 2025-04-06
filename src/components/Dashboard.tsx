@@ -42,6 +42,24 @@ const Dashboard = () => {
     setCourses([...courses, newCourse]);
   };
   
+  const handleDeleteAllTeachers = () => {
+    setTeachers([]);
+    // Also clear timetable as it may reference deleted teachers
+    setTimetable([]);
+  };
+  
+  const handleDeleteAllClassrooms = () => {
+    setClassrooms([]);
+    // Also clear timetable as it may reference deleted classrooms
+    setTimetable([]);
+  };
+  
+  const handleDeleteAllCourses = () => {
+    setCourses([]);
+    // Also clear timetable as it may reference deleted courses
+    setTimetable([]);
+  };
+  
   const handleGenerateTimetable = (entries: TimetableEntry[]) => {
     setTimetable(entries);
     setActiveTab("timetable");
@@ -119,6 +137,9 @@ const Dashboard = () => {
             onAddTeacher={handleAddTeacher}
             onAddClassroom={handleAddClassroom}
             onAddCourse={handleAddCourse}
+            onDeleteAllTeachers={handleDeleteAllTeachers}
+            onDeleteAllClassrooms={handleDeleteAllClassrooms}
+            onDeleteAllCourses={handleDeleteAllCourses}
           />
         </TabsContent>
         
