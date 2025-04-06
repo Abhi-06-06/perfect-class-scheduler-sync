@@ -1,9 +1,9 @@
-
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import TimetableGrid from "./TimetableGrid";
 import TeacherView from "./TeacherView";
 import InputForms from "./InputForms";
+import ViewData from "./ViewData";
 import GenerateTimetable from "./GenerateTimetable";
 import YearBatchSelector from "./YearBatchSelector";
 import { Teacher, Classroom, Course, TimetableEntry, Batch } from "@/types";
@@ -44,19 +44,16 @@ const Dashboard = () => {
   
   const handleDeleteAllTeachers = () => {
     setTeachers([]);
-    // Also clear timetable as it may reference deleted teachers
     setTimetable([]);
   };
   
   const handleDeleteAllClassrooms = () => {
     setClassrooms([]);
-    // Also clear timetable as it may reference deleted classrooms
     setTimetable([]);
   };
   
   const handleDeleteAllCourses = () => {
     setCourses([]);
-    // Also clear timetable as it may reference deleted courses
     setTimetable([]);
   };
   
@@ -79,9 +76,10 @@ const Dashboard = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid grid-cols-4 w-full max-w-2xl mx-auto">
+        <TabsList className="grid grid-cols-5 w-full max-w-3xl mx-auto">
           <TabsTrigger value="timetable">Timetable</TabsTrigger>
           <TabsTrigger value="teachers">Teacher View</TabsTrigger>
+          <TabsTrigger value="viewdata">View Data</TabsTrigger>
           <TabsTrigger value="input">Input Data</TabsTrigger>
           <TabsTrigger value="generate">Generate</TabsTrigger>
         </TabsList>
@@ -126,6 +124,14 @@ const Dashboard = () => {
             timetable={timetable}
             courses={courses}
             classrooms={classrooms}
+          />
+        </TabsContent>
+        
+        <TabsContent value="viewdata">
+          <ViewData
+            teachers={teachers}
+            classrooms={classrooms}
+            courses={courses}
           />
         </TabsContent>
         
