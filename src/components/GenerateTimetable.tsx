@@ -7,6 +7,8 @@ import { Info, AlertCircle, CheckCircle } from "lucide-react";
 import { TimetableEntry, Teacher, Classroom, Course, ValidationError } from "@/types";
 import { generateTimetable, validateTimetable } from "@/utils/timetableGenerator";
 import { TIME_SLOTS } from "@/data/mockData";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 interface GenerateTimetableProps {
   teachers: Teacher[];
@@ -24,6 +26,7 @@ const GenerateTimetable = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
   const [generationResult, setGenerationResult] = useState<"success" | "error" | null>(null);
+  const [maxConsecutiveLectures, setMaxConsecutiveLectures] = useState<string>("2");
 
   const handleGenerate = () => {
     setIsGenerating(true);
@@ -43,13 +46,19 @@ const GenerateTimetable = ({
       return;
     }
     
+    // Update all teachers with the new maxConsecutiveLectures value
+    const updatedTeachers = teachers.map(teacher => ({
+      ...teacher,
+      maxConsecutiveLectures: parseInt(maxConsecutiveLectures)
+    }));
+    
     // Generate the timetable
     setTimeout(() => {
       try {
-        const { entries } = generateTimetable(teachers, classrooms, courses);
+        const { entries } = generateTimetable(updatedTeachers, classrooms, courses);
         
         // Validate the generated timetable
-        const errors = validateTimetable(entries, teachers, classrooms, courses, TIME_SLOTS);
+        const errors = validateTimetable(entries, updatedTeachers, classrooms, courses, TIME_SLOTS);
         
         if (errors.length > 0) {
           setValidationErrors(errors);
@@ -100,13 +109,47 @@ const GenerateTimetable = ({
             />
           </div>
           
+          <div className="p-4 bg-gray-50 rounded-md border mb-4">
+            <Label htmlFor="max-consecutive" className="block mb-2 font-medium">
+              Maximum Consecutive Lectures Per Teacher
+            </Label>
+            <div className="flex gap-2 items-center">
+              <Select
+                value={maxConsecutiveLectures}
+                onValueChange={setMaxConsecutiveLectures}
+              >
+                <SelectTrigger id="max-consecutive" className="w-[180px]">
+                  <SelectValue placeholder="Select Limit" />
+                </SelectTrigger>
+                <SelectContent>
+                  {[1, 2, 3, 4, 5].map(num => (
+                    <SelectItem key={num} value={num.toString()}>
+                      {num} {num === 1 ? 'Lecture' : 'Lectures'}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <span className="text-sm text-gray-500">
+                Limit how many lectures a teacher can have in a row
+              </span>
+            </div>
+          </div>
+          
           {validationErrors.length > 0 && (
             <div className="mb-4">
               {validationErrors.map((error, index) => (
                 <Alert variant="destructive" key={index} className="mb-2">
                   <AlertCircle className="h-4 w-4" />
                   <AlertTitle>{error.type.replace(/_/g, " ")}</AlertTitle>
-                  <AlertDescription>{error.message}</AlertDescription>
+                  <AlertDescription>
+                    {error.message}
+                    {error.type === "CONSECUTIVE_LECTURE_CONFLICT" && (
+                      <div className="mt-2 text-sm">
+                        <p>Teachers are currently limited to {maxConsecutiveLectures} consecutive lectures.</p>
+                        <p>You can adjust this limit using the selector above.</p>
+                      </div>
+                    )}
+                  </AlertDescription>
                 </Alert>
               ))}
             </div>
@@ -135,7 +178,7 @@ const GenerateTimetable = ({
             <ul className="list-disc pl-5 mt-1 space-y-1">
               <li>No classroom will have more than one lecture at a time</li>
               <li>Break times will be respected (12:00-12:45pm and 2:45-3:00pm)</li>
-              <li>Teachers won't have back-to-back lectures for long durations</li>
+              <li>Teachers won't have more than {maxConsecutiveLectures} consecutive lectures</li>
               <li>Classrooms and labs will be used efficiently</li>
               <li>Faculty teaching multiple subjects will have balanced schedules</li>
             </ul>
