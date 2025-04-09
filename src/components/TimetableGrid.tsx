@@ -77,6 +77,26 @@ const TimetableGrid = ({
     );
   };
 
+  // Format the entry in the compact style seen in the reference image
+  const formatEntry = (entry: TimetableEntry, course?: Course, classroom?: Classroom) => {
+    if (!course) return "";
+    
+    // Format as: SUBJECT-BATCH(TYPE), ROOM
+    let formatted = course.subjectCode;
+    
+    // Add batch if available (with hyphen)
+    if (entry.batch) {
+      formatted += `-${entry.batch}`;
+    }
+    
+    // Add classroom info in parentheses if requested
+    if (showClassroom && classroom) {
+      formatted += `(${classroom.name})`;
+    }
+    
+    return formatted;
+  };
+
   // Function to render a break cell
   const renderBreakCell = () => (
     <TableCell className="border bg-gray-100 text-center font-medium text-gray-500">
@@ -93,9 +113,6 @@ const TimetableGrid = ({
             {displayTimeSlots.map(timeSlot => (
               <TableHead key={timeSlot.id} className="bg-gray-100 font-medium text-center">
                 {timeSlot.displayName || `${timeSlot.startTime}-${timeSlot.endTime}`}
-                {timeSlot.isLabSession && 
-                  <div className="text-xs text-acd-primary">(Lab)</div>
-                }
                 <div className="text-xs text-gray-500">
                   {timeSlot.startTime} - {timeSlot.endTime}
                 </div>
@@ -110,7 +127,7 @@ const TimetableGrid = ({
                 {day}
               </TableCell>
               
-              {displayTimeSlots.map((timeSlot, index) => {
+              {displayTimeSlots.map((timeSlot) => {
                 // Check if this time slot should be a break cell
                 const breakTimeSlot = breakTimeSlots.find(slot => 
                   slot.startTime >= timeSlot.startTime && slot.endTime <= timeSlot.endTime
@@ -129,33 +146,23 @@ const TimetableGrid = ({
                 return (
                   <TableCell 
                     key={`${day}-${timeSlot.id}`} 
-                    className="border p-1"
+                    className="border text-center p-1 text-sm"
                   >
-                    <div className="flex flex-col gap-1">
-                      {entries.map(entry => {
-                        const { course, teacher, classroom } = getCourseDetails(entry);
+                    <div className="flex flex-col items-center justify-center gap-1">
+                      {entries.map((entry, index) => {
+                        const { course, classroom } = getCourseDetails(entry);
                         return (
                           <div 
                             key={entry.id}
-                            className={`p-2 rounded border h-full ${
+                            className={`${
                               entry.isLabSession 
-                                ? "bg-blue-50 border-blue-200" 
-                                : "bg-acd-light border-acd-secondary/20"
-                            }`}
+                                ? "text-blue-600" 
+                                : "text-red-600"
+                            } font-medium ${index > 0 ? "mt-1" : ""}`}
                           >
-                            <div className="font-medium text-acd-primary">
-                              {course?.subjectCode}
-                            </div>
-                            {entry.batch && (
-                              <div className="text-xs font-semibold">Batch {entry.batch}</div>
-                            )}
-                            {!filterTeacherId && (
-                              <div className="text-xs text-gray-500">{teacher?.name}</div>
-                            )}
-                            {showClassroom && classroom && (
-                              <div className="text-xs mt-1 bg-acd-primary/10 inline-block px-1 rounded">
-                                {classroom.name}
-                              </div>
+                            {formatEntry(entry, course, classroom)}
+                            {classroom && !entry.batch && (
+                              <span className="text-xs ml-1">{classroom.name}</span>
                             )}
                           </div>
                         );

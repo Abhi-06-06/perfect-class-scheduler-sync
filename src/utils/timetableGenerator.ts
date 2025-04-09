@@ -22,7 +22,7 @@ export function generateTimetable(
   const regularSlots = TIME_SLOTS.filter(slot => !slot.isBreak && !slot.isLabSession);
   const labSlots = TIME_SLOTS.filter(slot => !slot.isBreak && slot.isLabSession);
   
-  // Schedule lectures first (non-lab sessions)
+  // Schedule regular lectures first
   courses.forEach(course => {
     const teacher = teachers.find(t => t.id === course.teacherId);
     if (!teacher) return;
@@ -63,7 +63,16 @@ export function generateTimetable(
         (entry.classroomId === classroom.id || entry.teacherId === teacher.id)
       );
       
-      if (!conflict) {
+      // Also check if there's already a lab session during this time
+      const labConflict = timetable.some(entry =>
+        entry.dayOfWeek === day &&
+        entry.isLabSession &&
+        entry.year === course.year &&
+        (TIME_SLOTS.find(slot => slot.id === entry.timeSlotId)?.startTime === timeSlot.startTime ||
+         TIME_SLOTS.find(slot => slot.id === entry.timeSlotId)?.endTime === timeSlot.endTime)
+      );
+      
+      if (!conflict && !labConflict) {
         // Add entry to timetable
         timetable.push({
           id: `entry${entryId++}`,
@@ -148,7 +157,22 @@ export function generateTimetable(
         
         const tooManyBatchesWithLabs = batchesWithLabsOnDay.size >= 2;
         
-        if (!labConflict && !teacherConflict && !batchLabConflict && !tooManyBatchesWithLabs) {
+        // Check for regular lecture conflicts during this lab time
+        const lectureConflict = timetable.some(entry =>
+          entry.dayOfWeek === day &&
+          !entry.isLabSession &&
+          entry.year === course.year &&
+          (
+            // Find overlapping regular slots for this lab session
+            regularSlots.some(slot => 
+              (TIME_SLOTS.find(ts => ts.id === entry.timeSlotId)?.startTime === slot.startTime) &&
+              (labSlot.startTime <= slot.endTime && labSlot.endTime >= slot.startTime)
+            )
+          )
+        );
+        
+        if (!labConflict && !teacherConflict && !batchLabConflict && 
+            !tooManyBatchesWithLabs && !lectureConflict) {
           // Add lab session to timetable
           timetable.push({
             id: `entry${entryId++}`,
