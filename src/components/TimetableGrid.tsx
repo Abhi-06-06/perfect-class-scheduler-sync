@@ -81,17 +81,22 @@ const TimetableGrid = ({
   const formatEntry = (entry: TimetableEntry, course?: Course, classroom?: Classroom) => {
     if (!course) return "";
     
-    // Format as: SUBJECT-BATCH(TYPE), ROOM
+    // Format as: SUBJECT-BATCH(ROOM)
     let formatted = course.subjectCode;
     
-    // Add batch if available (with hyphen)
+    // Add batch information
     if (entry.batch) {
       formatted += `-${entry.batch}`;
     }
     
-    // Add classroom info in parentheses if requested
+    // Add room info in parentheses if requested
     if (showClassroom && classroom) {
       formatted += `(${classroom.name})`;
+    }
+    
+    // Add lab indicator if it's a lab session
+    if (entry.isLabSession) {
+      formatted += "[LAB]";
     }
     
     return formatted;
@@ -103,6 +108,14 @@ const TimetableGrid = ({
       Recess
     </TableCell>
   );
+
+  // Check if a time slot is during a break
+  const isBreakTimeSlot = (timeSlot: TimeSlot) => {
+    return breakTimeSlots.some(breakSlot => 
+      (timeSlot.startTime >= breakSlot.startTime && timeSlot.startTime < breakSlot.endTime) ||
+      (timeSlot.endTime > breakSlot.startTime && timeSlot.endTime <= breakSlot.endTime)
+    );
+  };
 
   return (
     <div className="overflow-x-auto">
@@ -129,11 +142,7 @@ const TimetableGrid = ({
               
               {displayTimeSlots.map((timeSlot) => {
                 // Check if this time slot should be a break cell
-                const breakTimeSlot = breakTimeSlots.find(slot => 
-                  slot.startTime >= timeSlot.startTime && slot.endTime <= timeSlot.endTime
-                );
-                
-                if (breakTimeSlot) {
+                if (isBreakTimeSlot(timeSlot)) {
                   return renderBreakCell();
                 }
                 
@@ -161,9 +170,6 @@ const TimetableGrid = ({
                             } font-medium ${index > 0 ? "mt-1" : ""}`}
                           >
                             {formatEntry(entry, course, classroom)}
-                            {classroom && !entry.batch && (
-                              <span className="text-xs ml-1">{classroom.name}</span>
-                            )}
                           </div>
                         );
                       })}

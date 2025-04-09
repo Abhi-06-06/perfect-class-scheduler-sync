@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import TimetableGrid from "./TimetableGrid";
@@ -40,6 +41,24 @@ const Dashboard = () => {
       id: `crs${courses.length + 1}`
     };
     setCourses([...courses, newCourse]);
+  };
+  
+  const handleDeleteTeachers = (teacherIds: string[]) => {
+    setTeachers(teachers.filter(t => !teacherIds.includes(t.id)));
+    // Clear timetable entries related to deleted teachers
+    setTimetable(timetable.filter(entry => !teacherIds.includes(entry.teacherId)));
+  };
+  
+  const handleDeleteClassrooms = (classroomIds: string[]) => {
+    setClassrooms(classrooms.filter(c => !classroomIds.includes(c.id)));
+    // Clear timetable entries related to deleted classrooms
+    setTimetable(timetable.filter(entry => !classroomIds.includes(entry.classroomId)));
+  };
+  
+  const handleDeleteCourses = (courseIds: string[]) => {
+    setCourses(courses.filter(c => !courseIds.includes(c.id)));
+    // Clear timetable entries related to deleted courses
+    setTimetable(timetable.filter(entry => !courseIds.includes(entry.courseId)));
   };
   
   const handleDeleteAllTeachers = () => {
@@ -132,6 +151,9 @@ const Dashboard = () => {
             teachers={teachers}
             classrooms={classrooms}
             courses={courses}
+            onDeleteTeachers={handleDeleteTeachers}
+            onDeleteClassrooms={handleDeleteClassrooms}
+            onDeleteCourses={handleDeleteCourses}
           />
         </TabsContent>
         

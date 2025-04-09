@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { 
   Tabs, 
@@ -311,10 +310,11 @@ const TeacherForm = ({ onAddTeacher }: { onAddTeacher: (teacher: Omit<Teacher, "
 };
 
 const classroomSchema = z.object({
-  name: z.string().min(2, { message: "Room name must be at least 2 characters" }),
-  isLab: z.boolean().default(false),
-  capacity: z.coerce.number().default(60),
-  yearAssigned: z.string().optional()
+  year: z.string({ required_error: "Please select a year" }),
+  classroomCount: z.coerce.number().min(1, { message: "At least 1 classroom is required" }),
+  labCount: z.coerce.number().min(0, { message: "Lab count must be 0 or more" }),
+  classCapacity: z.coerce.number().min(10, { message: "Classroom capacity must be at least 10" }),
+  labCapacity: z.coerce.number().min(10, { message: "Lab capacity must be at least 10" })
 });
 
 type ClassroomFormData = z.infer<typeof classroomSchema>;
@@ -323,33 +323,46 @@ const ClassroomForm = ({ onAddClassroom }: { onAddClassroom: (classroom: Omit<Cl
   const form = useForm<ClassroomFormData>({
     resolver: zodResolver(classroomSchema),
     defaultValues: {
-      name: "",
-      isLab: false,
-      capacity: 60,
-      yearAssigned: "none"
+      year: "",
+      classroomCount: 1,
+      labCount: 0,
+      classCapacity: 60,
+      labCapacity: 15
     }
   });
-
-  const isLabSelected = form.watch("isLab");
   
   const onSubmit = (data: ClassroomFormData) => {
-    const newClassroom: Omit<Classroom, "id"> = {
-      name: data.name,
-      // Set capacity based on whether it's a lab or regular classroom
-      capacity: data.isLab ? 30 : 60,
-      isLab: data.isLab,
-      yearAssigned: data.yearAssigned && data.yearAssigned !== "none" ? parseInt(data.yearAssigned) : undefined
-    };
-    onAddClassroom(newClassroom);
+    const yearNum = parseInt(data.year);
+    
+    for (let i = 0; i < data.classroomCount; i++) {
+      const newClassroom: Omit<Classroom, "id"> = {
+        name: `R${yearNum}${i + 1}`,
+        capacity: data.classCapacity,
+        isLab: false,
+        yearAssigned: yearNum
+      };
+      onAddClassroom(newClassroom);
+    }
+    
+    for (let i = 0; i < data.labCount; i++) {
+      const newLab: Omit<Classroom, "id"> = {
+        name: `L${yearNum}${i + 1}`,
+        capacity: data.labCapacity,
+        isLab: true,
+        yearAssigned: yearNum
+      };
+      onAddClassroom(newLab);
+    }
+    
     form.reset();
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Add Classroom</CardTitle>
+        <CardTitle>Add Classrooms</CardTitle>
         <CardDescription>
-          Enter classroom details to add it to the system
+          Enter the number of classrooms and labs for a specific year
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -357,50 +370,10 @@ const ClassroomForm = ({ onAddClassroom }: { onAddClassroom: (classroom: Omit<Cl
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="name"
+              name="year"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Room Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="A101" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <div className="text-sm text-gray-500 mb-2">
-              {isLabSelected 
-                ? "Each lab has a capacity of 30 students" 
-                : "Each classroom has a fixed capacity of 60 students"}
-            </div>
-            
-            <FormField
-              control={form.control}
-              name="isLab"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel>
-                      This is a laboratory
-                    </FormLabel>
-                  </div>
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="yearAssigned"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Assigned Year (Leave empty for shared rooms)</FormLabel>
+                  <FormLabel>Year</FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     value={field.value}
@@ -411,7 +384,6 @@ const ClassroomForm = ({ onAddClassroom }: { onAddClassroom: (classroom: Omit<Cl
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="none">Any Year</SelectItem>
                       <SelectItem value="1">1st Year</SelectItem>
                       <SelectItem value="2">2nd Year</SelectItem>
                       <SelectItem value="3">3rd Year</SelectItem>
@@ -423,8 +395,68 @@ const ClassroomForm = ({ onAddClassroom }: { onAddClassroom: (classroom: Omit<Cl
               )}
             />
             
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="classroomCount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Number of Classrooms</FormLabel>
+                    <FormControl>
+                      <Input type="number" min={0} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="classCapacity"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Classroom Capacity</FormLabel>
+                    <FormControl>
+                      <Input type="number" min={10} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="labCount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Number of Labs</FormLabel>
+                    <FormControl>
+                      <Input type="number" min={0} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="labCapacity"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Lab Capacity</FormLabel>
+                    <FormControl>
+                      <Input type="number" min={10} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            
             <Button type="submit" className="bg-acd-primary hover:bg-acd-primary/90">
-              Add Classroom
+              Add Classrooms
             </Button>
           </form>
         </Form>
@@ -435,7 +467,7 @@ const ClassroomForm = ({ onAddClassroom }: { onAddClassroom: (classroom: Omit<Cl
 
 const courseSchema = z.object({
   name: z.string().min(3, { message: "Course name must be at least 3 characters" }),
-  subjectCode: z.string().min(3, { message: "Subject code must be at least 3 characters" }),
+  subjectCode: z.string().min(2, { message: "Subject code must be at least 2 characters" }),
   requiredSessions: z.coerce.number().min(1).max(10),
   requiresLab: z.boolean().default(false),
   teacherId: z.string({ required_error: "Please select a teacher" }),
@@ -574,7 +606,7 @@ const CourseForm = ({
                   </FormControl>
                   <div className="space-y-1 leading-none">
                     <FormLabel>
-                      Requires laboratory (2 hour sessions)
+                      Requires laboratory (integrated with lecture slots)
                     </FormLabel>
                   </div>
                 </FormItem>
