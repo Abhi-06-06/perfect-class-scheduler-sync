@@ -1,3 +1,4 @@
+
 import { 
   Teacher, Classroom, Course, TimetableEntry, TimeSlot, 
   ValidationError
@@ -62,16 +63,6 @@ export function validateTimetable(
       type: "DAY_LAB_LIMIT_CONFLICT",
       message: "More than two batches have lab sessions scheduled on the same day",
       affectedEntries: dayLabLimitConflicts
-    });
-  }
-  
-  // Check for lab and lecture overlaps for the same year
-  const labLectureOverlapConflicts = findLabLectureOverlapConflicts(timetable);
-  if (labLectureOverlapConflicts.length > 0) {
-    errors.push({
-      type: "LAB_LECTURE_OVERLAP_CONFLICT",
-      message: "A lab session and a lecture for the same year are scheduled at the same time",
-      affectedEntries: labLectureOverlapConflicts
     });
   }
 
@@ -171,40 +162,6 @@ export function findConsecutiveLectureConflicts(
       }
 
       lastSlotIndex = currentSlotIndex;
-    }
-  });
-
-  return conflicts;
-}
-
-/**
- * Finds conflicts where labs and lectures for the same year overlap
- */
-export function findLabLectureOverlapConflicts(timetable: TimetableEntry[]): TimetableEntry[] {
-  const conflicts: TimetableEntry[] = [];
-  const yearTimeSlotMap: Record<string, TimetableEntry[]> = {};
-
-  // Group by day, timeslot, and year
-  timetable.forEach(entry => {
-    if (!entry.year) return;
-    
-    const key = `${entry.dayOfWeek}_${entry.timeSlotId}_${entry.year}`;
-    if (!yearTimeSlotMap[key]) {
-      yearTimeSlotMap[key] = [];
-    }
-    yearTimeSlotMap[key].push(entry);
-  });
-
-  // Find conflicts where a lab and a lecture for the same year are at the same time
-  Object.values(yearTimeSlotMap).forEach(entries => {
-    if (entries.length > 1) {
-      const hasLab = entries.some(entry => entry.isLabSession);
-      const hasLecture = entries.some(entry => !entry.isLabSession && !entry.batch);
-      
-      // If both a lab and a regular lecture are scheduled at the same time for the same year
-      if (hasLab && hasLecture) {
-        conflicts.push(...entries);
-      }
     }
   });
 
