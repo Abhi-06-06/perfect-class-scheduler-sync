@@ -8,7 +8,7 @@ export type TimeSlot = {
   displayName?: string;  // For showing in the header (like "1", "2", etc.)
 };
 
-export type Batch = "A" | "B" | "C" | "D";
+export type Batch = "A" | "B" | "C" | "D" | "E" | "F";
 
 export type Teacher = {
   id: string;
