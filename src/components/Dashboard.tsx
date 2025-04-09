@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import TimetableGrid from "./TimetableGrid";
 import TeacherView from "./TeacherView";
@@ -9,6 +9,7 @@ import GenerateTimetable from "./GenerateTimetable";
 import YearBatchSelector from "./YearBatchSelector";
 import { Teacher, Classroom, Course, TimetableEntry, Batch } from "@/types";
 import { SAMPLE_TEACHERS, SAMPLE_CLASSROOMS, SAMPLE_COURSES, EMPTY_TIMETABLE } from "@/data/mockData";
+import { useToast } from "@/components/ui/use-toast";
 
 const Dashboard = () => {
   const [teachers, setTeachers] = useState<Teacher[]>([]);
@@ -18,6 +19,17 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("timetable");
   const [selectedYear, setSelectedYear] = useState<number | undefined>(undefined);
   const [selectedBatch, setSelectedBatch] = useState<Batch | undefined>(undefined);
+  const { toast } = useToast();
+  
+  // Debug log for component mount and state changes
+  useEffect(() => {
+    console.log("Dashboard mounted or updated with:", {
+      teachersCount: teachers.length,
+      classroomsCount: classrooms.length,
+      coursesCount: courses.length,
+      timetableCount: timetable.length
+    });
+  }, [teachers.length, classrooms.length, courses.length, timetable.length]);
   
   const handleAddTeacher = (teacher: Omit<Teacher, "id">) => {
     const newTeacher: Teacher = {
@@ -77,8 +89,23 @@ const Dashboard = () => {
   };
   
   const handleGenerateTimetable = (entries: TimetableEntry[]) => {
+    console.log(`Setting timetable with ${entries.length} entries`);
     setTimetable(entries);
-    setActiveTab("timetable");
+    
+    if (entries.length > 0) {
+      setActiveTab("timetable");
+      toast({
+        title: "Timetable Generated",
+        description: `Created with ${entries.length} entries.`,
+        variant: "default"
+      });
+    } else {
+      toast({
+        title: "Generation Failed",
+        description: "No timetable entries were created. Check your input data.",
+        variant: "destructive"
+      });
+    }
   };
   
   const handleYearChange = (year: number | undefined) => {
@@ -90,6 +117,20 @@ const Dashboard = () => {
   
   const handleBatchChange = (batch: Batch | undefined) => {
     setSelectedBatch(batch);
+  };
+
+  // Load sample data function
+  const loadSampleData = () => {
+    if (teachers.length === 0 && classrooms.length === 0 && courses.length === 0) {
+      setTeachers(SAMPLE_TEACHERS);
+      setClassrooms(SAMPLE_CLASSROOMS);
+      setCourses(SAMPLE_COURSES);
+      toast({
+        title: "Sample Data Loaded",
+        description: "Sample teachers, classrooms, and courses have been loaded.",
+        variant: "default"
+      });
+    }
   };
 
   return (
@@ -130,9 +171,17 @@ const Dashboard = () => {
           ) : (
             <div className="text-center py-20 bg-gray-50 rounded-lg border border-gray-200">
               <h3 className="text-xl font-medium text-gray-600 mb-2">No Timetable Generated Yet</h3>
-              <p className="text-gray-500">
+              <p className="text-gray-500 mb-4">
                 Go to the "Generate" tab to create a new timetable.
               </p>
+              {teachers.length === 0 && classrooms.length === 0 && courses.length === 0 && (
+                <button 
+                  onClick={loadSampleData}
+                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                >
+                  Load Sample Data
+                </button>
+              )}
             </div>
           )}
         </TabsContent>

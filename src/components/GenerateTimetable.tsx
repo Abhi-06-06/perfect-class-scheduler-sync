@@ -3,12 +3,13 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Info, AlertCircle, CheckCircle } from "lucide-react";
+import { Info, AlertCircle, CheckCircle, AlertTriangle } from "lucide-react";
 import { TimetableEntry, Teacher, Classroom, Course, ValidationError } from "@/types";
 import { generateTimetable, validateTimetable } from "@/utils/timetableGenerator";
 import { TIME_SLOTS } from "@/data/mockData";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/components/ui/use-toast";
 
 interface GenerateTimetableProps {
   teachers: Teacher[];
@@ -27,11 +28,20 @@ const GenerateTimetable = ({
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
   const [generationResult, setGenerationResult] = useState<"success" | "error" | null>(null);
   const [maxConsecutiveLectures, setMaxConsecutiveLectures] = useState<string>("2");
+  const [emptyTimetableWarning, setEmptyTimetableWarning] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const handleGenerate = () => {
     setIsGenerating(true);
     setValidationErrors([]);
     setGenerationResult(null);
+    setEmptyTimetableWarning(null);
+    
+    console.log("Starting timetable generation with data:", {
+      teachers: teachers.length,
+      classrooms: classrooms.length,
+      courses: courses.length
+    });
     
     // Simple validation to ensure we have the required data
     if (teachers.length === 0 || classrooms.length === 0 || courses.length === 0) {
@@ -43,6 +53,69 @@ const GenerateTimetable = ({
       ]);
       setIsGenerating(false);
       setGenerationResult("error");
+      
+      toast({
+        title: "Missing Data",
+        description: "Add teachers, classrooms, and courses before generating a timetable.",
+        variant: "destructive"
+      });
+      
+      return;
+    }
+    
+    // Check if courses have year assignments
+    const coursesWithoutYear = courses.filter(course => !course.year);
+    if (coursesWithoutYear.length > 0) {
+      setValidationErrors([
+        {
+          type: "INCOMPLETE_DATA",
+          message: `${coursesWithoutYear.length} courses don't have year assignments. All courses must be assigned to a year.`
+        }
+      ]);
+      setIsGenerating(false);
+      setGenerationResult("error");
+      
+      toast({
+        title: "Incomplete Data",
+        description: "All courses must be assigned to a year.",
+        variant: "destructive"
+      });
+      
+      return;
+    }
+    
+    // Check for minimum classroom requirements
+    const yearsWithCourses = new Set(courses.map(c => c.year));
+    const yearsWithClassrooms = new Set();
+    
+    classrooms.forEach(classroom => {
+      if (classroom.yearAssigned) {
+        yearsWithClassrooms.add(classroom.yearAssigned);
+      } else {
+        // If no year assigned, it's available for all years
+        yearsWithCourses.forEach(year => yearsWithClassrooms.add(year));
+      }
+    });
+    
+    // Find years that have courses but no classrooms
+    const yearsWithoutClassrooms = Array.from(yearsWithCourses).filter(year => !yearsWithClassrooms.has(year));
+    
+    if (yearsWithoutClassrooms.length > 0) {
+      setValidationErrors([
+        {
+          type: "MISSING_CLASSROOMS",
+          message: `Years ${yearsWithoutClassrooms.join(', ')} have courses but no assigned classrooms.`
+        }
+      ]);
+      setIsGenerating(false);
+      setGenerationResult("error");
+      
+      toast({
+        title: "Missing Classrooms",
+        description: `Years ${yearsWithoutClassrooms.join(', ')} have courses but no assigned classrooms.`,
+        variant: "destructive"
+      });
+      
       return;
     }
     
@@ -55,19 +128,45 @@ const GenerateTimetable = ({
     // Generate the timetable
     setTimeout(() => {
       try {
+        console.log("Calling generateTimetable function");
         const { entries } = generateTimetable(updatedTeachers, classrooms, courses);
+        console.log(`Generated ${entries.length} timetable entries`);
         
-        // Validate the generated timetable
-        const errors = validateTimetable(entries, updatedTeachers, classrooms, courses, TIME_SLOTS);
-        
-        if (errors.length > 0) {
-          setValidationErrors(errors);
+        if (entries.length === 0) {
+          setEmptyTimetableWarning("The timetable generator couldn't create any entries. Check that you have enough classrooms, teachers, and courses with matching year assignments.");
           setGenerationResult("error");
+          
+          toast({
+            title: "Generation Failed",
+            description: "No entries could be generated. Check your input data.",
+            variant: "destructive"
+          });
         } else {
-          onGenerateTimetable(entries);
-          setGenerationResult("success");
+          // Validate the generated timetable
+          const errors = validateTimetable(entries, updatedTeachers, classrooms, courses, TIME_SLOTS);
+          
+          if (errors.length > 0) {
+            setValidationErrors(errors);
+            setGenerationResult("error");
+            
+            toast({
+              title: "Validation Errors",
+              description: "The generated timetable has some conflicts.",
+              variant: "destructive"
+            });
+          } else {
+            onGenerateTimetable(entries);
+            setGenerationResult("success");
+            
+            toast({
+              title: "Success",
+              description: `Generated timetable with ${entries.length} entries.`,
+              variant: "default"
+            });
+          }
         }
       } catch (error) {
+        console.error("Error generating timetable:", error);
         setValidationErrors([
           {
             type: "GENERATION_ERROR",
@@ -75,6 +174,12 @@ const GenerateTimetable = ({
           }
         ]);
         setGenerationResult("error");
+        
+        toast({
+          title: "Generation Error",
+          description: "An unexpected error occurred. Check the console for details.",
+          variant: "destructive"
+        });
       } finally {
         setIsGenerating(false);
       }
@@ -88,7 +193,7 @@ const GenerateTimetable = ({
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <div className="grid grid-cols-3 gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             <InfoCard 
               title="Teachers" 
               count={teachers.length} 
@@ -134,6 +239,16 @@ const GenerateTimetable = ({
               </span>
             </div>
           </div>
+          
+          {emptyTimetableWarning && (
+            <Alert variant="warning" className="mb-4 bg-yellow-50 border-yellow-200">
+              <AlertTriangle className="h-4 w-4 text-yellow-600" />
+              <AlertTitle className="text-yellow-800">Generation Warning</AlertTitle>
+              <AlertDescription className="text-yellow-700">
+                {emptyTimetableWarning}
+              </AlertDescription>
+            </Alert>
+          )}
           
           {validationErrors.length > 0 && (
             <div className="mb-4">
