@@ -39,8 +39,18 @@ const TimetableGrid = ({
   filterBatch,
   showClassroom = true
 }: TimetableGridProps) => {
-  // Get all timeslots, excluding break time slots for display
-  const displayTimeSlots = TIME_SLOTS.filter(slot => !slot.isBreak);
+  // Get all non-break time slots for display, ordered by start time
+  const displayTimeSlots = TIME_SLOTS.filter(slot => !slot.isBreak)
+    .sort((a, b) => {
+      // Convert time strings to comparable values (e.g., "9:00" becomes 900)
+      const timeToNumber = (timeStr: string) => {
+        const [hour, minute] = timeStr.split(':').map(Number);
+        return hour * 100 + minute;
+      };
+      
+      return timeToNumber(a.startTime) - timeToNumber(b.startTime);
+    });
+  
   const breakTimeSlots = TIME_SLOTS.filter(slot => slot.isBreak);
   
   // Apply filters to the timetable
@@ -110,13 +120,19 @@ const TimetableGrid = ({
                 {day}
               </TableCell>
               
-              {displayTimeSlots.map((timeSlot, index) => {
+              {displayTimeSlots.map(timeSlot => {
                 // Check if this time slot should be a break cell
-                const breakTimeSlot = breakTimeSlots.find(slot => 
-                  slot.startTime >= timeSlot.startTime && slot.endTime <= timeSlot.endTime
-                );
+                const isBreakTime = breakTimeSlots.some(breakSlot => {
+                  const breakStart = breakSlot.startTime;
+                  const breakEnd = breakSlot.endTime;
+                  const slotStart = timeSlot.startTime;
+                  const slotEnd = timeSlot.endTime;
+                  
+                  // Check if the time ranges overlap
+                  return (slotStart <= breakEnd && slotEnd >= breakStart);
+                });
                 
-                if (breakTimeSlot) {
+                if (isBreakTime) {
                   return renderBreakCell();
                 }
                 
@@ -145,6 +161,7 @@ const TimetableGrid = ({
                           >
                             <div className="font-medium text-acd-primary">
                               {course?.subjectCode}
+                              {entry.isLabSession && " (Lab)"}
                             </div>
                             {entry.batch && (
                               <div className="text-xs font-semibold">Batch {entry.batch}</div>
