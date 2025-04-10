@@ -6,7 +6,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Info, AlertCircle, CheckCircle, AlertTriangle } from "lucide-react";
 import { TimetableEntry, Teacher, Classroom, Course, ValidationError } from "@/types";
 import { generateTimetable, validateTimetable } from "@/utils/timetableGenerator";
-import { TIME_SLOTS } from "@/data/mockData";
+import { TIME_SLOTS, SAMPLE_TIMETABLE } from "@/data/mockData";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
@@ -27,7 +27,7 @@ const GenerateTimetable = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
   const [generationResult, setGenerationResult] = useState<"success" | "error" | null>(null);
-  const [maxConsecutiveLectures, setMaxConsecutiveLectures] = useState<string>("2");
+  const [maxConsecutiveLectures, setMaxConsecutiveLectures] = useState<string>("3");
   const [emptyTimetableWarning, setEmptyTimetableWarning] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -138,7 +138,7 @@ const GenerateTimetable = ({
           
           toast({
             title: "Generation Failed",
-            description: "No entries could be generated. Check your input data.",
+            description: "No entries could be generated. Check your input data or use sample data.",
             variant: "destructive"
           });
         } else {
@@ -184,6 +184,18 @@ const GenerateTimetable = ({
         setIsGenerating(false);
       }
     }, 1500); // Simulated delay for generation
+  };
+
+  const loadSampleData = () => {
+    // Load the sample timetable directly
+    onGenerateTimetable(SAMPLE_TIMETABLE);
+    setValidationErrors([]);
+    setGenerationResult("success");
+    
+    toast({
+      title: "Sample Data Loaded",
+      description: "Sample timetable data has been loaded for demonstration.",
+    });
   };
 
   return (
@@ -280,22 +292,31 @@ const GenerateTimetable = ({
             </Alert>
           )}
           
-          <Button 
-            onClick={handleGenerate} 
-            disabled={isGenerating}
-            className="w-full bg-acd-primary hover:bg-acd-primary/90"
-          >
-            {isGenerating ? "Generating..." : "Generate Timetable"}
-          </Button>
+          <div className="flex flex-col md:flex-row gap-4">
+            <Button 
+              onClick={handleGenerate} 
+              disabled={isGenerating}
+              className="flex-1 bg-acd-primary hover:bg-acd-primary/90"
+            >
+              {isGenerating ? "Generating..." : "Generate Timetable"}
+            </Button>
+            
+            <Button 
+              onClick={loadSampleData}
+              className="flex-1 bg-blue-600 hover:bg-blue-700"
+            >
+              Load Sample Data
+            </Button>
+          </div>
           
           <div className="text-xs text-gray-500 mt-2">
             <p>The timetable generator will attempt to create a schedule that satisfies all constraints:</p>
             <ul className="list-disc pl-5 mt-1 space-y-1">
               <li>No classroom will have more than one lecture at a time</li>
-              <li>Break times will be respected (12:00-12:45pm and 2:45-3:00pm)</li>
+              <li>Break times will be respected (12:00-12:45pm)</li>
               <li>Teachers won't have more than {maxConsecutiveLectures} consecutive lectures</li>
-              <li>Classrooms and labs will be used efficiently</li>
-              <li>Faculty teaching multiple subjects will have balanced schedules</li>
+              <li>Each batch will have at most one lab session per day</li>
+              <li>At most two batches will have lab sessions on the same day</li>
             </ul>
           </div>
         </div>

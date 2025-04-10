@@ -83,9 +83,18 @@ export function generateTimetable(
     const batches = Array.from(allBatches);
     console.log(`Year ${year} has ${batches.length} batches: ${batches.join(', ')}`);
     
+    // Track batches with lab sessions for each day to ensure constraint 4 (max 2 batches with labs per day)
+    const dayLabBatches: Record<string, Set<string>> = {};
+    DAYS_OF_WEEK.forEach(day => {
+      dayLabBatches[day] = new Set<string>();
+    });
+    
     // Schedule for each batch
     batches.forEach(batch => {
       console.log(`Scheduling for year ${year}, batch ${batch}`);
+      
+      // Track days where this batch already has lab sessions (constraint 5: one lab per batch per day)
+      const batchLabDays = new Set<string>();
       
       // Schedule lab sessions first as they're more constrained
       labCourses.forEach(course => {
@@ -114,6 +123,16 @@ export function generateTimetable(
           const dayIndex = Math.floor(Math.random() * DAYS_OF_WEEK.length);
           const day = DAYS_OF_WEEK[dayIndex];
           
+          // CONSTRAINT 5: Skip if this batch already has a lab on this day
+          if (batchLabDays.has(day)) {
+            continue;
+          }
+          
+          // CONSTRAINT 4: Skip if day already has 2 batches with labs
+          if (dayLabBatches[day].size >= 2) {
+            continue;
+          }
+          
           // Try to find two consecutive slots
           const startSlotIndex = Math.floor(Math.random() * (regularSlots.length - 1));
           const slot1 = regularSlots[startSlotIndex];
@@ -141,35 +160,39 @@ export function generateTimetable(
             (entry.timeSlotId === slot1.id || entry.timeSlotId === slot2.id)
           );
           
-          const teacherConflict = timetable.some(entry => 
-            entry.dayOfWeek === day && 
-            entry.teacherId === teacher.id &&
-            (entry.timeSlotId === slot1.id || entry.timeSlotId === slot2.id)
-          );
+          // CONSTRAINT 3: Check if teacher would exceed consecutive lecture limit
+          const teacherSlots = timetable
+            .filter(entry => entry.dayOfWeek === day && entry.teacherId === teacher.id)
+            .map(entry => regularSlots.findIndex(s => s.id === entry.timeSlotId))
+            .sort((a, b) => a - b);
           
-          // Check if this batch already has a lab on this day
-          const batchLabConflict = timetable.some(entry => 
-            entry.dayOfWeek === day && 
-            entry.batch === batch && 
-            entry.isLabSession
-          );
+          const currentSlot1Index = regularSlots.findIndex(s => s.id === slot1.id);
+          const currentSlot2Index = regularSlots.findIndex(s => s.id === slot2.id);
           
-          // Check if there are already two batches with labs on this day
-          const batchesWithLabsOnDay = new Set(
-            timetable
-              .filter(entry => 
-                entry.dayOfWeek === day && 
-                entry.isLabSession && 
-                entry.year === year
-              )
-              .map(entry => entry.batch)
-          );
+          let wouldExceedConsecutiveLimit = false;
+          const maxConsecutive = teacher.maxConsecutiveLectures || 2;
           
-          const tooManyBatchesWithLabs = batchesWithLabsOnDay.size >= yearLabs.length;
-          
-          if (!batchConflict && !labConflict && !teacherConflict && 
-              !batchLabConflict && !tooManyBatchesWithLabs) {
+          if (teacherSlots.length > 0) {
+            // Check if adding these two slots would create too many consecutive lectures
+            const allSlots = [...teacherSlots, currentSlot1Index, currentSlot2Index].sort((a, b) => a - b);
+            let consecutive = 1;
+            let maxConsecutiveFound = 1;
             
+            for (let i = 1; i < allSlots.length; i++) {
+              if (allSlots[i] === allSlots[i-1] + 1) {
+                consecutive++;
+              } else {
+                consecutive = 1;
+              }
+              maxConsecutiveFound = Math.max(maxConsecutiveFound, consecutive);
+            }
+            
+            if (maxConsecutiveFound > maxConsecutive) {
+              wouldExceedConsecutiveLimit = true;
+            }
+          }
+          
+          if (!batchConflict && !labConflict && !wouldExceedConsecutiveLimit) {            
             // Add first lab session
             timetable.push({
               id: `entry${entryId++}`,
@@ -195,6 +218,12 @@ export function generateTimetable(
               isLabSession: true,
               year
             });
+            
+            // Mark that this batch now has a lab on this day
+            batchLabDays.add(day);
+            
+            // Mark that this day now has one more batch with a lab
+            dayLabBatches[day].add(batch);
             
             break; // Lab scheduled successfully
           }
@@ -267,45 +296,38 @@ export function generateTimetable(
             entry.teacherId === teacher.id
           );
           
-          // Check for consecutive lecture limit
-          const teacherEntriesThisDay = timetable.filter(entry => 
-            entry.dayOfWeek === day && 
-            entry.teacherId === teacher.id
-          );
+          // CONSTRAINT 3: Improved check for consecutive lecture limit
+          const teacherSlots = timetable
+            .filter(entry => entry.dayOfWeek === day && entry.teacherId === teacher.id)
+            .map(entry => regularSlots.findIndex(s => s.id === entry.timeSlotId))
+            .sort((a, b) => a - b);
           
+          const currentSlotIndex = regularSlots.findIndex(s => s.id === timeSlot.id);
+          
+          let wouldExceedConsecutiveLimit = false;
           const maxConsecutive = teacher.maxConsecutiveLectures || 2;
-          let wouldExceedConsecutive = false;
           
-          if (teacherEntriesThisDay.length > 0) {
-            const timeSlotIndex = regularSlots.findIndex(slot => slot.id === timeSlot.id);
+          if (teacherSlots.length > 0) {
+            // Check if adding this slot would create too many consecutive lectures
+            const allSlots = [...teacherSlots, currentSlotIndex].sort((a, b) => a - b);
             let consecutive = 1;
+            let maxConsecutiveFound = 1;
             
-            // Check before
-            for (let i = timeSlotIndex - 1; i >= 0; i--) {
-              const slotBefore = regularSlots[i];
-              if (teacherEntriesThisDay.some(entry => entry.timeSlotId === slotBefore.id)) {
+            for (let i = 1; i < allSlots.length; i++) {
+              if (allSlots[i] === allSlots[i-1] + 1) {
                 consecutive++;
               } else {
-                break;
+                consecutive = 1;
               }
+              maxConsecutiveFound = Math.max(maxConsecutiveFound, consecutive);
             }
             
-            // Check after
-            for (let i = timeSlotIndex + 1; i < regularSlots.length; i++) {
-              const slotAfter = regularSlots[i];
-              if (teacherEntriesThisDay.some(entry => entry.timeSlotId === slotAfter.id)) {
-                consecutive++;
-              } else {
-                break;
-              }
-            }
-            
-            if (consecutive > maxConsecutive) {
-              wouldExceedConsecutive = true;
+            if (maxConsecutiveFound > maxConsecutive) {
+              wouldExceedConsecutiveLimit = true;
             }
           }
           
-          if (!batchConflict && !classroomConflict && !teacherConflict && !wouldExceedConsecutive) {
+          if (!batchConflict && !classroomConflict && !teacherConflict && !wouldExceedConsecutiveLimit) {
             timetable.push({
               id: `entry${entryId++}`,
               dayOfWeek: day,
