@@ -16,10 +16,10 @@ export const TIME_SLOTS: TimeSlot[] = [
   { id: "slot1", startTime: "10:00", endTime: "11:00", displayName: "1" },
   { id: "slot2", startTime: "11:00", endTime: "12:00", displayName: "2" },
   { id: "recess1", startTime: "12:00", endTime: "12:45", isBreak: true, displayName: "Recess" },
-  { id: "recess2", startTime: "12:45", endTime: "1:45", isBreak: true, displayName: "Recess" },
-  { id: "slot3", startTime: "1:45", endTime: "2:45", displayName: "3" },
-  { id: "slot4", startTime: "2:45", endTime: "3:45", displayName: "4" },
-  { id: "slot5", startTime: "3:45", endTime: "4:45", displayName: "5" }
+  { id: "slot3", startTime: "12:45", endTime: "1:45", displayName: "3" },
+  { id: "slot4", startTime: "1:45", endTime: "2:45", displayName: "4" },
+  { id: "slot5", startTime: "2:45", endTime: "3:45", displayName: "5" },
+  { id: "slot6", startTime: "3:45", endTime: "4:45", displayName: "6" }
 ];
 
 // Modified year groups with variable batch counts
@@ -172,7 +172,7 @@ export const SAMPLE_CLASSROOMS: Classroom[] = [
   }
 ];
 
-// Demo data for courses
+// Demo data for courses - ensuring each course has the correct year and valid batches
 export const SAMPLE_COURSES: Course[] = [
   {
     id: "course1",
@@ -182,17 +182,17 @@ export const SAMPLE_COURSES: Course[] = [
     requiresLab: true,
     teacherId: "teacher1",
     year: 1,
-    batches: ["A", "B", "C", "D", "E", "F"]
+    batches: ["A", "B", "C", "D"]
   },
   {
     id: "course2",
     name: "Mathematics for Computing",
     subjectCode: "M4C",
-    requiredSessions: 4,
+    requiredSessions: 2,
     requiresLab: false,
     teacherId: "teacher2",
     year: 1,
-    batches: ["A", "B", "C", "D", "E", "F"]
+    batches: ["A", "B", "C", "D"]
   },
   {
     id: "course3",
@@ -202,43 +202,24 @@ export const SAMPLE_COURSES: Course[] = [
     requiresLab: true,
     teacherId: "teacher3",
     year: 1,
-    batches: ["A", "B", "C", "D", "E", "F"]
+    batches: ["A", "B", "C", "D"]
   },
   {
     id: "course4",
     name: "Computer Organization",
     subjectCode: "CO",
-    requiredSessions: 3,
-    requiresLab: true,
-    teacherId: "teacher4",
-    year: 1,
-    batches: ["A", "B", "C", "D", "E", "F"]
-  },
-  {
-    id: "course5",
-    name: "Software Engineering",
-    subjectCode: "SE",
-    requiredSessions: 2,
-    requiresLab: true,
-    teacherId: "teacher5",
-    year: 1,
-    batches: ["A", "B", "C", "D", "E", "F"]
-  },
-  {
-    id: "course6",
-    name: "Programming Fundamentals",
-    subjectCode: "PF",
     requiredSessions: 2,
     requiresLab: false,
-    teacherId: "teacher1",
+    teacherId: "teacher4",
     year: 1,
-    batches: ["A", "B", "C", "D", "E", "F"]
+    batches: ["A", "B", "C", "D"]
   }
 ];
 
+// Empty timetable for initial state
 export const EMPTY_TIMETABLE: TimetableEntry[] = [];
 
-// Sample timetable entries
+// Comprehensive sample timetable with entries following all constraints
 export const SAMPLE_TIMETABLE: TimetableEntry[] = [
   // First Year - Batch A
   {
@@ -329,8 +310,8 @@ export const SAMPLE_TIMETABLE: TimetableEntry[] = [
     id: "entry9",
     dayOfWeek: "Monday",
     timeSlotId: "slot4",
-    courseId: "course4", // CO (Lab)
-    teacherId: "teacher4",
+    courseId: "course1", // DSA (Lab)
+    teacherId: "teacher1",
     classroomId: "lab202",
     isLabSession: true,
     year: 1,
@@ -340,19 +321,93 @@ export const SAMPLE_TIMETABLE: TimetableEntry[] = [
     id: "entry10",
     dayOfWeek: "Monday",
     timeSlotId: "slot5",
-    courseId: "course4", // CO (Lab continued)
-    teacherId: "teacher4",
+    courseId: "course1", // DSA (Lab continued)
+    teacherId: "teacher1",
     classroomId: "lab202",
     isLabSession: true,
     year: 1,
     batch: "B"
   },
   
-  // First Year - Batch C
+  // Additional entries for other days for Batch A
   {
     id: "entry11",
-    dayOfWeek: "Monday",
+    dayOfWeek: "Tuesday",
     timeSlotId: "slot1",
+    courseId: "course4", // CO
+    teacherId: "teacher4",
+    classroomId: "room101",
+    year: 1,
+    batch: "A"
+  },
+  {
+    id: "entry12",
+    dayOfWeek: "Tuesday",
+    timeSlotId: "slot2",
+    courseId: "course2", // Mathematics
+    teacherId: "teacher2",
+    classroomId: "room101",
+    year: 1,
+    batch: "A"
+  },
+  {
+    id: "entry13",
+    dayOfWeek: "Tuesday",
+    timeSlotId: "slot3",
+    courseId: "course1", // DSA
+    teacherId: "teacher1",
+    classroomId: "room101",
+    year: 1,
+    batch: "A"
+  },
+  {
+    id: "entry14",
+    dayOfWeek: "Tuesday",
+    timeSlotId: "slot4",
+    courseId: "course1", // DSA (Lab)
+    teacherId: "teacher1",
+    classroomId: "lab201",
+    isLabSession: true,
+    year: 1,
+    batch: "A"
+  },
+  {
+    id: "entry15",
+    dayOfWeek: "Tuesday",
+    timeSlotId: "slot5",
+    courseId: "course1", // DSA (Lab continued)
+    teacherId: "teacher1",
+    classroomId: "lab201",
+    isLabSession: true,
+    year: 1,
+    batch: "A"
+  },
+  
+  // First Year - Batch C (Wednesday)
+  {
+    id: "entry16",
+    dayOfWeek: "Wednesday",
+    timeSlotId: "slot1",
+    courseId: "course1", // DSA
+    teacherId: "teacher1",
+    classroomId: "room103",
+    year: 1,
+    batch: "C"
+  },
+  {
+    id: "entry17",
+    dayOfWeek: "Wednesday",
+    timeSlotId: "slot2",
+    courseId: "course2", // Mathematics
+    teacherId: "teacher2",
+    classroomId: "room103",
+    year: 1,
+    batch: "C"
+  },
+  {
+    id: "entry18",
+    dayOfWeek: "Wednesday",
+    timeSlotId: "slot3",
     courseId: "course3", // DBMS
     teacherId: "teacher3",
     classroomId: "room103",
@@ -360,45 +415,25 @@ export const SAMPLE_TIMETABLE: TimetableEntry[] = [
     batch: "C"
   },
   {
-    id: "entry12",
-    dayOfWeek: "Monday",
-    timeSlotId: "slot2",
-    courseId: "course4", // CO
-    teacherId: "teacher4",
-    classroomId: "room103",
-    year: 1,
-    batch: "C"
-  },
-  {
-    id: "entry13",
-    dayOfWeek: "Monday",
-    timeSlotId: "slot3",
-    courseId: "course5", // SE
-    teacherId: "teacher5",
-    classroomId: "room103",
-    year: 1,
-    batch: "C"
-  },
-  {
-    id: "entry14",
-    dayOfWeek: "Monday",
+    id: "entry19",
+    dayOfWeek: "Wednesday",
     timeSlotId: "slot4",
-    courseId: "course5", // SE (Lab)
-    teacherId: "teacher5",
+    courseId: "course3", // DBMS (Lab)
+    teacherId: "teacher3",
     classroomId: "lab203",
     isLabSession: true,
     year: 1,
     batch: "C"
   },
   {
-    id: "entry15",
-    dayOfWeek: "Monday",
+    id: "entry20",
+    dayOfWeek: "Wednesday",
     timeSlotId: "slot5",
-    courseId: "course5", // SE (Lab continued)
-    teacherId: "teacher5",
+    courseId: "course3", // DBMS (Lab continued)
+    teacherId: "teacher3",
     classroomId: "lab203",
     isLabSession: true,
     year: 1,
     batch: "C"
-  },
+  }
 ];
