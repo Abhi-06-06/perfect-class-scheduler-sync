@@ -6,8 +6,6 @@ import { Info, AlertCircle, CheckCircle, AlertTriangle } from "lucide-react";
 import { TimetableEntry, Teacher, Classroom, Course, ValidationError } from "@/types";
 import { generateTimetable, validateTimetable } from "@/utils/timetableGenerator";
 import { TIME_SLOTS, SAMPLE_TIMETABLE } from "@/data/mockData";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 
 interface GenerateTimetableProps {
@@ -26,7 +24,6 @@ const GenerateTimetable = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
   const [generationResult, setGenerationResult] = useState<"success" | "error" | null>(null);
-  const [maxConsecutiveLectures, setMaxConsecutiveLectures] = useState<string>("3");
   const [emptyTimetableWarning, setEmptyTimetableWarning] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -118,17 +115,11 @@ const GenerateTimetable = ({
       return;
     }
     
-    // Update all teachers with the new maxConsecutiveLectures value
-    const updatedTeachers = teachers.map(teacher => ({
-      ...teacher,
-      maxConsecutiveLectures: parseInt(maxConsecutiveLectures)
-    }));
-    
     // Generate the timetable
     setTimeout(() => {
       try {
         console.log("Calling generateTimetable function");
-        const { entries } = generateTimetable(updatedTeachers, classrooms, courses);
+        const { entries } = generateTimetable(teachers, classrooms, courses);
         console.log(`Generated ${entries.length} timetable entries`);
         
         if (entries.length === 0) {
@@ -142,7 +133,7 @@ const GenerateTimetable = ({
           });
         } else {
           // Validate the generated timetable
-          const errors = validateTimetable(entries, updatedTeachers, classrooms, courses, TIME_SLOTS);
+          const errors = validateTimetable(entries, teachers, classrooms, courses, TIME_SLOTS);
           
           if (errors.length > 0) {
             setValidationErrors(errors);
@@ -225,32 +216,6 @@ const GenerateTimetable = ({
             />
           </div>
           
-          <div className="p-4 bg-gray-50 rounded-md border mb-4">
-            <Label htmlFor="max-consecutive" className="block mb-2 font-medium">
-              Maximum Consecutive Lectures Per Teacher
-            </Label>
-            <div className="flex gap-2 items-center">
-              <Select
-                value={maxConsecutiveLectures}
-                onValueChange={setMaxConsecutiveLectures}
-              >
-                <SelectTrigger id="max-consecutive" className="w-[180px]">
-                  <SelectValue placeholder="Select Limit" />
-                </SelectTrigger>
-                <SelectContent>
-                  {[1, 2, 3, 4, 5].map(num => (
-                    <SelectItem key={num} value={num.toString()}>
-                      {num} {num === 1 ? 'Lecture' : 'Lectures'}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <span className="text-sm text-gray-500">
-                Limit how many lectures a teacher can have in a row
-              </span>
-            </div>
-          </div>
-          
           {emptyTimetableWarning && (
             <Alert variant="default" className="mb-4 bg-yellow-50 border-yellow-200">
               <AlertTriangle className="h-4 w-4 text-yellow-600" />
@@ -269,12 +234,6 @@ const GenerateTimetable = ({
                   <AlertTitle>{error.type.replace(/_/g, " ")}</AlertTitle>
                   <AlertDescription>
                     {error.message}
-                    {error.type === "CONSECUTIVE_LECTURE_CONFLICT" && (
-                      <div className="mt-2 text-sm">
-                        <p>Teachers are currently limited to {maxConsecutiveLectures} consecutive lectures.</p>
-                        <p>You can adjust this limit using the selector above.</p>
-                      </div>
-                    )}
                   </AlertDescription>
                 </Alert>
               ))}
@@ -313,10 +272,11 @@ const GenerateTimetable = ({
             <ul className="list-disc pl-5 mt-1 space-y-1">
               <li>No classroom will have more than one lecture at a time</li>
               <li>Break times will be respected (12:00-12:45pm)</li>
-              <li>Teachers won't have more than {maxConsecutiveLectures} consecutive lectures</li>
-              <li>Each batch will have lab sessions for different courses</li>
+              <li>Consecutive lectures will be scheduled only when needed for a class</li>
               <li>All batch students will attend common lectures together</li>
               <li>Lab sessions will be scheduled as double periods</li>
+              <li>Different batches will have different lab rooms at the same time</li>
+              <li>A batch will not have multiple labs for the same course on the same day</li>
             </ul>
           </div>
         </div>

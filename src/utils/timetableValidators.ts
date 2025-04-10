@@ -35,16 +35,6 @@ export function validateTimetable(
     });
   }
 
-  // Check teacher consecutive lectures (constraint 3)
-  const consecutiveLectureConflicts = findConsecutiveLectureConflicts(timetable, teachers, timeSlots);
-  if (consecutiveLectureConflicts.length > 0) {
-    errors.push({
-      type: "CONSECUTIVE_LECTURE_CONFLICT",
-      message: "Some teachers have too many consecutive lectures",
-      affectedEntries: consecutiveLectureConflicts
-    });
-  }
-
   // Check same course lab conflicts on same day (no more than one lab per course per batch per day)
   const sameCourseLabConflicts = findSameCourseLabConflicts(timetable);
   if (sameCourseLabConflicts.length > 0) {
@@ -52,6 +42,16 @@ export function validateTimetable(
       type: "SAME_COURSE_LAB_CONFLICT",
       message: "A batch has more than one lab session for the same course scheduled on the same day",
       affectedEntries: sameCourseLabConflicts
+    });
+  }
+
+  // Check for lab batch conflicts (same time, same lab room)
+  const labBatchRoomConflicts = findLabBatchRoomConflicts(timetable);
+  if (labBatchRoomConflicts.length > 0) {
+    errors.push({
+      type: "LAB_BATCH_ROOM_CONFLICT",
+      message: "Multiple batches are assigned to the same lab room at the same time",
+      affectedEntries: labBatchRoomConflicts
     });
   }
 
@@ -99,65 +99,6 @@ export function findBreakTimeConflicts(
 }
 
 /**
- * Finds conflicts where teachers have too many consecutive lectures
- */
-export function findConsecutiveLectureConflicts(
-  timetable: TimetableEntry[],
-  teachers: Teacher[],
-  timeSlots: TimeSlot[]
-): TimetableEntry[] {
-  const conflicts: TimetableEntry[] = [];
-  const teacherMap = new Map(teachers.map(t => [t.id, t]));
-
-  // Group entries by teacher and day
-  const teacherDayMap: Record<string, TimetableEntry[]> = {};
-  timetable.forEach(entry => {
-    const key = `${entry.teacherId}_${entry.dayOfWeek}`;
-    if (!teacherDayMap[key]) {
-      teacherDayMap[key] = [];
-    }
-    teacherDayMap[key].push(entry);
-  });
-
-  // Sort each teacher's daily schedule by time slot
-  Object.entries(teacherDayMap).forEach(([key, entries]) => {
-    const sortedEntries = entries.sort((a, b) => {
-      const slotA = timeSlots.findIndex(slot => slot.id === a.timeSlotId);
-      const slotB = timeSlots.findIndex(slot => slot.id === b.timeSlotId);
-      return slotA - slotB;
-    });
-
-    // Check for consecutive lectures
-    const teacherId = key.split('_')[0];
-    const teacher = teacherMap.get(teacherId);
-    if (!teacher) return;
-
-    const maxConsecutive = teacher.maxConsecutiveLectures || 2;
-    let consecutive = 1;
-    let lastSlotIndex = -2;
-
-    for (let i = 0; i < sortedEntries.length; i++) {
-      const entry = sortedEntries[i];
-      const currentSlotIndex = timeSlots.findIndex(slot => slot.id === entry.timeSlotId);
-      
-      if (currentSlotIndex === lastSlotIndex + 1) {
-        consecutive++;
-      } else {
-        consecutive = 1;
-      }
-
-      if (consecutive > maxConsecutive) {
-        conflicts.push(entry);
-      }
-
-      lastSlotIndex = currentSlotIndex;
-    }
-  });
-
-  return conflicts;
-}
-
-/**
  * Finds conflicts where a batch has more than one lab for the same course in a day
  */
 export function findSameCourseLabConflicts(timetable: TimetableEntry[]): TimetableEntry[] {
@@ -179,6 +120,38 @@ export function findSameCourseLabConflicts(timetable: TimetableEntry[]): Timetab
   Object.values(batchCourseDayLabMap).forEach(entries => {
     if (entries.length > 2) { // Allow at most 2 slots for one lab session (consecutive)
       conflicts.push(...entries);
+    }
+  });
+
+  return conflicts;
+}
+
+/**
+ * Finds conflicts where multiple batches are assigned to the same lab room at the same time
+ */
+export function findLabBatchRoomConflicts(timetable: TimetableEntry[]): TimetableEntry[] {
+  const conflicts: TimetableEntry[] = [];
+  const labTimeSlotMap: Record<string, TimetableEntry[]> = {};
+
+  // Group lab sessions by day, timeslot, and lab room
+  timetable.forEach(entry => {
+    if (entry.isLabSession) {
+      const key = `${entry.dayOfWeek}_${entry.timeSlotId}_${entry.classroomId}`;
+      if (!labTimeSlotMap[key]) {
+        labTimeSlotMap[key] = [];
+      }
+      labTimeSlotMap[key].push(entry);
+    }
+  });
+
+  // Find conflicts where different batches use the same lab room at the same time
+  Object.values(labTimeSlotMap).forEach(entries => {
+    if (entries.length > 1) {
+      // Check if there are different batches in the same lab room
+      const batches = new Set(entries.map(entry => entry.batch));
+      if (batches.size > 1) {
+        conflicts.push(...entries);
+      }
     }
   });
 
