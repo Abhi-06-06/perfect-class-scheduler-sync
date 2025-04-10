@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -315,8 +314,9 @@ const GenerateTimetable = ({
               <li>No classroom will have more than one lecture at a time</li>
               <li>Break times will be respected (12:00-12:45pm)</li>
               <li>Teachers won't have more than {maxConsecutiveLectures} consecutive lectures</li>
-              <li>Each batch will have at most one lab session per day</li>
-              <li>At most two batches will have lab sessions on the same day</li>
+              <li>Each batch will have lab sessions for different courses</li>
+              <li>All batch students will attend common lectures together</li>
+              <li>Lab sessions will be scheduled as double periods</li>
             </ul>
           </div>
         </div>

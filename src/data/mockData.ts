@@ -1,4 +1,3 @@
-
 import { Classroom, Course, Teacher, TimeSlot, TimetableEntry, Day, Batch, YearGroup } from "@/types";
 
 export const DAYS_OF_WEEK: Day[] = [
@@ -22,7 +21,6 @@ export const TIME_SLOTS: TimeSlot[] = [
   { id: "slot6", startTime: "3:45", endTime: "4:45", displayName: "6" }
 ];
 
-// Modified year groups with variable batch counts
 export const YEAR_GROUPS: YearGroup[] = [
   {
     id: "year1",
@@ -50,13 +48,12 @@ export const YEAR_GROUPS: YearGroup[] = [
   }
 ];
 
-// Demo data for teachers
 export const SAMPLE_TEACHERS: Teacher[] = [
   {
     id: "teacher1",
     name: "Dr. Patel",
     subjects: ["Data Structures", "Algorithms", "Computer Networks"],
-    maxConsecutiveLectures: 2
+    maxConsecutiveLectures: 3
   },
   {
     id: "teacher2",
@@ -68,13 +65,13 @@ export const SAMPLE_TEACHERS: Teacher[] = [
     id: "teacher3",
     name: "Dr. Kumar",
     subjects: ["Database Systems", "Operating Systems"],
-    maxConsecutiveLectures: 2
+    maxConsecutiveLectures: 3
   },
   {
     id: "teacher4",
     name: "Prof. Singh",
     subjects: ["Computer Architecture", "Digital Logic Design"],
-    maxConsecutiveLectures: 2
+    maxConsecutiveLectures: 3
   },
   {
     id: "teacher5",
@@ -84,7 +81,6 @@ export const SAMPLE_TEACHERS: Teacher[] = [
   }
 ];
 
-// Demo data for classrooms
 export const SAMPLE_CLASSROOMS: Classroom[] = [
   {
     id: "room101",
@@ -172,7 +168,6 @@ export const SAMPLE_CLASSROOMS: Classroom[] = [
   }
 ];
 
-// Demo data for courses - ensuring each course has the correct year and valid batches
 export const SAMPLE_COURSES: Course[] = [
   {
     id: "course1",
@@ -191,8 +186,7 @@ export const SAMPLE_COURSES: Course[] = [
     requiredSessions: 2,
     requiresLab: false,
     teacherId: "teacher2",
-    year: 1,
-    batches: ["A", "B", "C", "D"]
+    year: 1
   },
   {
     id: "course3",
@@ -211,229 +205,312 @@ export const SAMPLE_COURSES: Course[] = [
     requiredSessions: 2,
     requiresLab: false,
     teacherId: "teacher4",
-    year: 1,
-    batches: ["A", "B", "C", "D"]
+    year: 1
   }
 ];
 
-// Empty timetable for initial state
 export const EMPTY_TIMETABLE: TimetableEntry[] = [];
 
-// Comprehensive sample timetable with entries following all constraints
 export const SAMPLE_TIMETABLE: TimetableEntry[] = [
-  // First Year - Batch A
+  // Monday - Common Lectures
   {
     id: "entry1",
     dayOfWeek: "Monday",
     timeSlotId: "slot1",
-    courseId: "course2", // Mathematics
+    courseId: "course2", // Mathematics (common lecture)
     teacherId: "teacher2",
     classroomId: "room101",
-    year: 1,
-    batch: "A"
+    year: 1
   },
   {
     id: "entry2",
     dayOfWeek: "Monday",
     timeSlotId: "slot2",
-    courseId: "course1", // DSA
-    teacherId: "teacher1",
+    courseId: "course4", // Computer Organization (common lecture)
+    teacherId: "teacher4",
     classroomId: "room101",
-    year: 1,
-    batch: "A"
+    year: 1
   },
+  
+  // Monday - Lab Sessions for Batch A and B
   {
     id: "entry3",
     dayOfWeek: "Monday",
     timeSlotId: "slot3",
-    courseId: "course3", // DBMS
-    teacherId: "teacher3",
-    classroomId: "room101",
-    year: 1,
-    batch: "A"
+    courseId: "course1", // DSA Lab - Batch A
+    teacherId: "teacher1",
+    classroomId: "lab201",
+    batch: "A",
+    isLabSession: true,
+    year: 1
   },
   {
     id: "entry4",
     dayOfWeek: "Monday",
     timeSlotId: "slot4",
-    courseId: "course3", // DBMS (Lab)
-    teacherId: "teacher3",
+    courseId: "course1", // DSA Lab - Batch A (continued)
+    teacherId: "teacher1",
     classroomId: "lab201",
+    batch: "A",
     isLabSession: true,
-    year: 1,
-    batch: "A"
+    year: 1
   },
   {
     id: "entry5",
     dayOfWeek: "Monday",
-    timeSlotId: "slot5",
-    courseId: "course3", // DBMS (Lab continued)
+    timeSlotId: "slot3",
+    courseId: "course3", // DBMS Lab - Batch B
     teacherId: "teacher3",
-    classroomId: "lab201",
+    classroomId: "lab202",
+    batch: "B",
     isLabSession: true,
-    year: 1,
-    batch: "A"
+    year: 1
   },
-  
-  // First Year - Batch B
   {
     id: "entry6",
     dayOfWeek: "Monday",
-    timeSlotId: "slot1",
-    courseId: "course1", // DSA
-    teacherId: "teacher1",
-    classroomId: "room102",
-    year: 1,
-    batch: "B"
+    timeSlotId: "slot4",
+    courseId: "course3", // DBMS Lab - Batch B (continued)
+    teacherId: "teacher3",
+    classroomId: "lab202",
+    batch: "B",
+    isLabSession: true,
+    year: 1
   },
+  
+  // Tuesday - Common Lectures and Lab Sessions
   {
     id: "entry7",
-    dayOfWeek: "Monday",
-    timeSlotId: "slot2",
-    courseId: "course2", // Mathematics
+    dayOfWeek: "Tuesday",
+    timeSlotId: "slot1",
+    courseId: "course2", // Mathematics (common lecture)
     teacherId: "teacher2",
-    classroomId: "room102",
-    year: 1,
-    batch: "B"
+    classroomId: "room101",
+    year: 1
   },
   {
     id: "entry8",
-    dayOfWeek: "Monday",
-    timeSlotId: "slot3",
-    courseId: "course4", // CO
+    dayOfWeek: "Tuesday",
+    timeSlotId: "slot2",
+    courseId: "course4", // Computer Organization (common lecture)
     teacherId: "teacher4",
-    classroomId: "room102",
-    year: 1,
-    batch: "B"
+    classroomId: "room101",
+    year: 1
   },
   {
     id: "entry9",
-    dayOfWeek: "Monday",
-    timeSlotId: "slot4",
-    courseId: "course1", // DSA (Lab)
-    teacherId: "teacher1",
-    classroomId: "lab202",
+    dayOfWeek: "Tuesday",
+    timeSlotId: "slot3",
+    courseId: "course3", // DBMS Lab - Batch C
+    teacherId: "teacher3",
+    classroomId: "lab201",
+    batch: "C",
     isLabSession: true,
-    year: 1,
-    batch: "B"
+    year: 1
   },
   {
     id: "entry10",
-    dayOfWeek: "Monday",
-    timeSlotId: "slot5",
-    courseId: "course1", // DSA (Lab continued)
-    teacherId: "teacher1",
-    classroomId: "lab202",
+    dayOfWeek: "Tuesday",
+    timeSlotId: "slot4",
+    courseId: "course3", // DBMS Lab - Batch C (continued)
+    teacherId: "teacher3",
+    classroomId: "lab201",
+    batch: "C",
     isLabSession: true,
-    year: 1,
-    batch: "B"
+    year: 1
   },
-  
-  // Additional entries for other days for Batch A
   {
     id: "entry11",
     dayOfWeek: "Tuesday",
-    timeSlotId: "slot1",
-    courseId: "course4", // CO
-    teacherId: "teacher4",
-    classroomId: "room101",
-    year: 1,
-    batch: "A"
+    timeSlotId: "slot3",
+    courseId: "course1", // DSA Lab - Batch D
+    teacherId: "teacher1",
+    classroomId: "lab202",
+    batch: "D",
+    isLabSession: true,
+    year: 1
   },
   {
     id: "entry12",
     dayOfWeek: "Tuesday",
-    timeSlotId: "slot2",
-    courseId: "course2", // Mathematics
-    teacherId: "teacher2",
-    classroomId: "room101",
-    year: 1,
-    batch: "A"
+    timeSlotId: "slot4",
+    courseId: "course1", // DSA Lab - Batch D (continued)
+    teacherId: "teacher1",
+    classroomId: "lab202",
+    batch: "D",
+    isLabSession: true,
+    year: 1
   },
+  
+  // Wednesday - Common Lectures
   {
     id: "entry13",
-    dayOfWeek: "Tuesday",
-    timeSlotId: "slot3",
-    courseId: "course1", // DSA
-    teacherId: "teacher1",
+    dayOfWeek: "Wednesday",
+    timeSlotId: "slot1",
+    courseId: "course4", // Computer Organization (common lecture)
+    teacherId: "teacher4",
     classroomId: "room101",
-    year: 1,
-    batch: "A"
+    year: 1
   },
   {
     id: "entry14",
-    dayOfWeek: "Tuesday",
-    timeSlotId: "slot4",
-    courseId: "course1", // DSA (Lab)
-    teacherId: "teacher1",
-    classroomId: "lab201",
-    isLabSession: true,
-    year: 1,
-    batch: "A"
-  },
-  {
-    id: "entry15",
-    dayOfWeek: "Tuesday",
-    timeSlotId: "slot5",
-    courseId: "course1", // DSA (Lab continued)
-    teacherId: "teacher1",
-    classroomId: "lab201",
-    isLabSession: true,
-    year: 1,
-    batch: "A"
-  },
-  
-  // First Year - Batch C (Wednesday)
-  {
-    id: "entry16",
-    dayOfWeek: "Wednesday",
-    timeSlotId: "slot1",
-    courseId: "course1", // DSA
-    teacherId: "teacher1",
-    classroomId: "room103",
-    year: 1,
-    batch: "C"
-  },
-  {
-    id: "entry17",
     dayOfWeek: "Wednesday",
     timeSlotId: "slot2",
-    courseId: "course2", // Mathematics
+    courseId: "course2", // Mathematics (common lecture)
     teacherId: "teacher2",
-    classroomId: "room103",
-    year: 1,
-    batch: "C"
+    classroomId: "room101",
+    year: 1
+  },
+  
+  // Thursday - Common Lectures
+  {
+    id: "entry15",
+    dayOfWeek: "Thursday",
+    timeSlotId: "slot1",
+    courseId: "course1", // DSA (common lecture)
+    teacherId: "teacher1",
+    classroomId: "room101",
+    year: 1
+  },
+  {
+    id: "entry16",
+    dayOfWeek: "Thursday",
+    timeSlotId: "slot2",
+    courseId: "course3", // DBMS (common lecture)
+    teacherId: "teacher3",
+    classroomId: "room101",
+    year: 1
+  },
+  
+  // Thursday - Lab Sessions for different batches with different courses
+  {
+    id: "entry17",
+    dayOfWeek: "Thursday",
+    timeSlotId: "slot3",
+    courseId: "course1", // DSA Lab - Batch C
+    teacherId: "teacher1",
+    classroomId: "lab201",
+    batch: "C",
+    isLabSession: true,
+    year: 1
   },
   {
     id: "entry18",
-    dayOfWeek: "Wednesday",
-    timeSlotId: "slot3",
-    courseId: "course3", // DBMS
-    teacherId: "teacher3",
-    classroomId: "room103",
-    year: 1,
-    batch: "C"
+    dayOfWeek: "Thursday",
+    timeSlotId: "slot4",
+    courseId: "course1", // DSA Lab - Batch C (continued)
+    teacherId: "teacher1",
+    classroomId: "lab201",
+    batch: "C",
+    isLabSession: true,
+    year: 1
   },
   {
     id: "entry19",
-    dayOfWeek: "Wednesday",
-    timeSlotId: "slot4",
-    courseId: "course3", // DBMS (Lab)
+    dayOfWeek: "Thursday",
+    timeSlotId: "slot3",
+    courseId: "course3", // DBMS Lab - Batch A
     teacherId: "teacher3",
-    classroomId: "lab203",
+    classroomId: "lab202",
+    batch: "A",
     isLabSession: true,
-    year: 1,
-    batch: "C"
+    year: 1
   },
   {
     id: "entry20",
-    dayOfWeek: "Wednesday",
-    timeSlotId: "slot5",
-    courseId: "course3", // DBMS (Lab continued)
+    dayOfWeek: "Thursday",
+    timeSlotId: "slot4",
+    courseId: "course3", // DBMS Lab - Batch A (continued)
     teacherId: "teacher3",
-    classroomId: "lab203",
+    classroomId: "lab202",
+    batch: "A",
     isLabSession: true,
-    year: 1,
-    batch: "C"
+    year: 1
+  },
+  
+  // Friday - Common Lectures
+  {
+    id: "entry21",
+    dayOfWeek: "Friday",
+    timeSlotId: "slot1",
+    courseId: "course1", // DSA (common lecture)
+    teacherId: "teacher1",
+    classroomId: "room101",
+    year: 1
+  },
+  {
+    id: "entry22",
+    dayOfWeek: "Friday",
+    timeSlotId: "slot2",
+    courseId: "course3", // DBMS (common lecture)
+    teacherId: "teacher3",
+    classroomId: "room101",
+    year: 1
+  },
+  
+  // Friday - Lab Sessions 
+  {
+    id: "entry23",
+    dayOfWeek: "Friday",
+    timeSlotId: "slot3",
+    courseId: "course3", // DBMS Lab - Batch D
+    teacherId: "teacher3",
+    classroomId: "lab201",
+    batch: "D",
+    isLabSession: true,
+    year: 1
+  },
+  {
+    id: "entry24",
+    dayOfWeek: "Friday",
+    timeSlotId: "slot4",
+    courseId: "course3", // DBMS Lab - Batch D (continued)
+    teacherId: "teacher3",
+    classroomId: "lab201",
+    batch: "D",
+    isLabSession: true,
+    year: 1
+  },
+  {
+    id: "entry25",
+    dayOfWeek: "Friday",
+    timeSlotId: "slot3",
+    courseId: "course1", // DSA Lab - Batch B
+    teacherId: "teacher1",
+    classroomId: "lab202",
+    batch: "B",
+    isLabSession: true,
+    year: 1
+  },
+  {
+    id: "entry26",
+    dayOfWeek: "Friday",
+    timeSlotId: "slot4",
+    courseId: "course1", // DSA Lab - Batch B (continued)
+    teacherId: "teacher1",
+    classroomId: "lab202",
+    batch: "B",
+    isLabSession: true,
+    year: 1
+  },
+  
+  // Saturday - Special sessions
+  {
+    id: "entry27",
+    dayOfWeek: "Saturday",
+    timeSlotId: "slot1",
+    courseId: "course1", // DSA (common lecture)
+    teacherId: "teacher1",
+    classroomId: "room101",
+    year: 1
+  },
+  {
+    id: "entry28",
+    dayOfWeek: "Saturday",
+    timeSlotId: "slot2",
+    courseId: "course3", // DBMS (common lecture)
+    teacherId: "teacher3",
+    classroomId: "room101",
+    year: 1
   }
 ];

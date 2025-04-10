@@ -1,4 +1,3 @@
-
 import { 
   Teacher, Classroom, Course, TimetableEntry, TimeSlot, 
   ValidationError
@@ -46,23 +45,13 @@ export function validateTimetable(
     });
   }
 
-  // Check batch lab constraints (no more than one lab per day per batch)
-  const batchLabConflicts = findBatchLabConflicts(timetable);
-  if (batchLabConflicts.length > 0) {
+  // Check same course lab conflicts on same day (no more than one lab per course per batch per day)
+  const sameCourseLabConflicts = findSameCourseLabConflicts(timetable);
+  if (sameCourseLabConflicts.length > 0) {
     errors.push({
-      type: "BATCH_LAB_CONFLICT",
-      message: "A batch has more than one lab session scheduled on the same day",
-      affectedEntries: batchLabConflicts
-    });
-  }
-
-  // Check more than two batch labs in a day
-  const dayLabLimitConflicts = findDayLabLimitConflicts(timetable);
-  if (dayLabLimitConflicts.length > 0) {
-    errors.push({
-      type: "DAY_LAB_LIMIT_CONFLICT",
-      message: "More than two batches have lab sessions scheduled on the same day",
-      affectedEntries: dayLabLimitConflicts
+      type: "SAME_COURSE_LAB_CONFLICT",
+      message: "A batch has more than one lab session for the same course scheduled on the same day",
+      affectedEntries: sameCourseLabConflicts
     });
   }
 
@@ -169,58 +158,27 @@ export function findConsecutiveLectureConflicts(
 }
 
 /**
- * Finds conflicts where a batch has more than one lab in a day
+ * Finds conflicts where a batch has more than one lab for the same course in a day
  */
-export function findBatchLabConflicts(timetable: TimetableEntry[]): TimetableEntry[] {
+export function findSameCourseLabConflicts(timetable: TimetableEntry[]): TimetableEntry[] {
   const conflicts: TimetableEntry[] = [];
-  const batchDayLabMap: Record<string, TimetableEntry[]> = {};
+  const batchCourseDayLabMap: Record<string, TimetableEntry[]> = {};
 
-  // Group lab sessions by batch and day
+  // Group lab sessions by batch, course, and day
   timetable.forEach(entry => {
     if (entry.isLabSession && entry.batch) {
-      const key = `${entry.batch}_${entry.dayOfWeek}_${entry.year}`;
-      if (!batchDayLabMap[key]) {
-        batchDayLabMap[key] = [];
+      const key = `${entry.batch}_${entry.courseId}_${entry.dayOfWeek}_${entry.year}`;
+      if (!batchCourseDayLabMap[key]) {
+        batchCourseDayLabMap[key] = [];
       }
-      batchDayLabMap[key].push(entry);
+      batchCourseDayLabMap[key].push(entry);
     }
   });
 
   // Find conflicts
-  Object.values(batchDayLabMap).forEach(entries => {
-    if (entries.length > 1) {
+  Object.values(batchCourseDayLabMap).forEach(entries => {
+    if (entries.length > 2) { // Allow at most 2 slots for one lab session (consecutive)
       conflicts.push(...entries);
-    }
-  });
-
-  return conflicts;
-}
-
-/**
- * Finds conflicts where more than two batches have labs on the same day
- */
-export function findDayLabLimitConflicts(timetable: TimetableEntry[]): TimetableEntry[] {
-  const conflicts: TimetableEntry[] = [];
-  const dayYearLabMap: Record<string, Set<string>> = {};
-  const dayYearEntries: Record<string, TimetableEntry[]> = {};
-
-  // Group lab sessions by day and year, count unique batches
-  timetable.forEach(entry => {
-    if (entry.isLabSession && entry.batch && entry.year) {
-      const key = `${entry.dayOfWeek}_${entry.year}`;
-      if (!dayYearLabMap[key]) {
-        dayYearLabMap[key] = new Set();
-        dayYearEntries[key] = [];
-      }
-      dayYearLabMap[key].add(entry.batch);
-      dayYearEntries[key].push(entry);
-    }
-  });
-
-  // Find days with more than 2 batches having labs
-  Object.entries(dayYearLabMap).forEach(([key, batches]) => {
-    if (batches.size > 2) {
-      conflicts.push(...dayYearEntries[key]);
     }
   });
 
